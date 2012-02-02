@@ -1,0 +1,460 @@
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+use Data::Dumper;
+use File::Basename;
+use threads ('yield',
+ 'stack_size' => 64*4096,
+ 'stringify');
+use threads::shared;
+use IPC::Run3;
+
+package ClusterSSHCurses;
+use Curses;
+use Curses::UI;
+use constant {
+   MAX_NODES => 100,
+   MAIN_PROCESS => "MAIN PROCESS",
+};
+my ($cui, $cui_thr, %pipes, $current_view, %saved_texts, $last_view, $last_nb_buttons);
+my %process_to_pipe : shared = ();
+my @processes : shared = ();
+
+#Initialize parent -> son pipes
+sub init_pipes {
+   for (my $i = 0; $i < MAX_NODES; $i++) {
+      pipe($pipes{$i}->{FROM_CHILD}, $pipes{$i}->{TO_PARENT});
+      $pipes{$i}->{FROM_CHILD}->autoflush(1);
+      $pipes{$i}->{TO_PARENT}->autoflush(1);
+   }
+
+   #Even the main process has a view.
+   bind_pipe(MAIN_PROCESS);
+   select_view(MAIN_PROCESS);
+}
+sub bind_pipe {
+   my ($process) = @_;
+   my $pipe_num = $process_to_pipe{$process};
+   if(!defined $pipe_num) {
+      my $last_pipe = scalar keys %process_to_pipe;
+      $pipe_num = $process_to_pipe{$process} = $last_pipe;
+      push(@processes, $process);
+   }
+   select($pipes{$pipe_num}->{TO_PARENT});
+}
+sub select_view {
+   $current_view = $process_to_pipe{$_[0]};
+}
+sub change_view {
+   my $opt = $_[0] // "nothing";
+   my $button_box = $cui->getobj('w0')->getobj('injectors');
+   if($opt eq 'left') {
+      $button_box->previous_button;
+   } elsif($opt eq 'right') {
+      $button_box->next_button;
+   }
+   $button_box->draw;
+   select_view($button_box->get);
+}
+sub add_buttons {
+   $last_nb_buttons //= 0;
+   if(scalar(@processes) != $last_nb_buttons) {
+      my $button_box = $cui->getobj('w0')->getobj('injectors');
+      $last_nb_buttons = scalar(@processes);
+      my @buttons;
+      my $i = 0;
+      for my $p (@processes) {
+         push(@buttons, { 
+               -label => " ".$p." ",
+               -value => $p,
+               -shortcut => $i++,
+               -onpress => sub { change_view; },
+         });
+      }
+      $button_box->{-buttons} = \@buttons;
+      $button_box->process_buttondefs;
+      $button_box->layout;
+      $button_box->draw;
+   }
+}
+
+#View: update the current textarea.
+sub output_timer_callback($;) {
+   my $cui = shift;
+   my $text_area = $cui->getobj('w1')->getobj('te');
+   my $handle = $pipes{$current_view}->{FROM_CHILD};
+   my $changed = 0;
+   my ($max, $need_scrolldown);
+
+   add_buttons;
+
+   $last_view //= $current_view;
+   if($current_view != $last_view) {
+      $saved_texts{$last_view} = $text_area->text;
+      my $old_text = ($saved_texts{$current_view} // '');
+      $text_area->text($old_text);
+      $last_view = $current_view;
+      $need_scrolldown = 1;
+      $changed = 1;
+   } else {
+      $max = @{$text_area->{-scr_lines}} - $text_area->canvasheight;
+      $need_scrolldown = $max == $text_area->{-yscrpos};
+   }  
+
+   while(1) {
+      my $rin = '';
+      vec($rin,fileno($handle),1) = 1;
+      my ($nfound,$timeleft) = select($rin, undef, undef, 0);
+
+      if($nfound > 0) {
+         $changed = 1;
+         my $line = <$handle>;
+         $text_area->text($text_area->text().$line);
+      } else {
+         last;
+      }
+   }
+   if($changed) {
+      if($need_scrolldown || $max <= 0) {
+         $max = @{$text_area->{-scr_lines}} - $text_area->canvasheight;
+         if($max >= 0) {
+            $text_area->{-yscrpos} = $max;
+            $text_area->{-ypos} = $text_area->{-yscrpos};
+         }
+      }  
+   }
+   $text_area->draw;
+}
+
+#View: init.
+sub create_cui {
+   bind_pipe(MAIN_PROCESS);
+   $SIG{'KILL'} = sub { threads->exit(); }; 	#So that we can exit properly
+   $cui = new Curses::UI (-color_support => 1, -clear_on_exit => 1);
+   $cui->set_binding(sub { 
+         endwin;
+         exit;
+      }, "\cC");
+   $cui->set_binding(sub {
+         change_view('left');
+      }, KEY_LEFT());
+   $cui->set_binding(sub {
+         change_view('right');
+      }, KEY_RIGHT());
+   my $w0 = $cui->add('w0', 'Window', 
+      -y => 0,
+      -height => 2
+   );
+   $w0->add(
+      'injectors', 'Buttonbox',
+   );
+   add_buttons;
+
+
+   my $w1 = $cui->add(
+      'w1', 'Window',
+      -y => 2,
+      -padbottom    => 0,
+   );
+   $w1->add(
+      'te', 'TextEditor',
+      -title => MAIN_PROCESS,
+      -border => 1,
+      -titlereverse => 0,
+      -vscrollbar => 1,
+      -hscrollbar => 1,
+      #-wrapping => 1,
+      -readonly => 1,
+      -width => $w1->canvaswidth - 10,
+   )->focus;
+   $cui->set_timer(
+      'output_timer',
+      \&output_timer_callback, 0.5
+   );
+   $cui->enable_timer('output_timer');
+      
+   $cui->mainloop;
+}
+sub create_view {
+	$cui_thr = threads->create(sub { create_cui; });
+}
+sub destroy_view {
+	$cui_thr->kill('KILL')->detach(); #To make sure that curses is not updating anything after endwin
+	endwin;
+}
+
+sub create_process {
+   my $h =  $pipes{0};
+   my $pid = fork();
+   if ($pid) { # Parent code
+      waitpid($pid, 0) if defined $_[0];
+   } else {    # Child
+      IPC::Run3::run3 './test.pl', undef, $h->{TO_PARENT};
+      exit(0);
+   }
+}
+
+init_pipes;
+create_view;
+END {
+   destroy_view;
+}
+
+
+package ClusterSSHNode;
+use overload
+   '""' => \&cast_to_scalar;
+
+my $debug = 0;
+my $SSH_OPTS="-o \"StrictHostKeyChecking=no\"";
+
+sub new {
+	my $self  = {};
+	bless $self;
+
+   $self->{hostname} = $_[0];
+   return $self;
+}
+
+sub cast_to_scalar {
+   my $self = $_[0];
+   return $self->{hostname};
+}
+
+sub run_scriptfile {
+	my $self          = $_[0];
+	my $to_exec       = $_[1];
+	my $env           = $_[2];
+	my $opt           = $_[3];
+
+	if ( !-f $to_exec ) {
+		return ("[$self] Error file '$to_exec' does not exists\n");
+	}
+
+	my $to_file = "/tmp/"
+	  . File::Basename::basename($to_exec) . "."
+	  . int(rand(100000000));
+	my $cmd = "scp $SSH_OPTS $to_exec $self:$to_file";
+	my $ret = `$cmd 2>&1`;
+
+	if ($?) {
+		return ("Error returned by scp command ($cmd) on $self : \n$ret\n");
+	}
+
+	if($to_file =~ m/.pl./){
+		return $self->run_cmd( "perl $to_file", $env, $opt );
+	} else {
+		return $self->run_cmd( "bash $to_file", $env, $opt );
+	}
+}
+
+sub run_cmd {
+	my $self          = $_[0];
+	my $to_exec       = $_[1];
+	my $env           = $_[2];
+	my $opt           = $_[3] // { };
+   
+   ClusterSSHCurses::bind_pipe($self->{hostname});
+
+	my $cmd;
+	my $ret = "";
+
+	if ( defined $env ) {
+		my $envc = "";
+		for my $e ( keys %$env ) {
+			$envc .= "$e=\'" . $env->{$e} . "\' ";
+		}
+		$cmd = "ssh $SSH_OPTS $self \"env $envc $to_exec\"";
+	} else {
+		$cmd = "ssh $SSH_OPTS $self \"$to_exec\"";
+	}
+	print "[Node $self] Executing command ($cmd)\n" if $debug;
+
+   open(CMD, "$cmd 2>&1 |");
+   while(<CMD>) {
+      my $line = $_;
+      $ret .= $line;
+      printf "[%s] %s", "$self", $line unless $opt->{silent};
+   }
+   close(CMD);
+
+	if ( $? && !$opt->{ignore_errors} ) {
+      $ret //= "";
+		chomp($ret);
+      return ("Error returned by ssh command ($cmd) on node $self : \n$ret\n");
+	}
+
+	return ($ret);
+}
+
+sub sudo {
+   my ($self, $cmd) = @_;
+   my $out = $self->run_cmd("sudo ".$cmd);
+   if($out =~ /sudo: no tty present and no askpass program specified/) {
+     $out = $self->run_cmd($cmd);
+   }
+   return $out;
+}
+
+sub start_profilers {
+   my ($self, $sar) = @_;
+   $self->{sar} = $sar;
+
+   my $async_thread = threads::async { 
+      if ( scalar keys %{$self->{sar}} > 0) {
+         $self->sudo("killall -q -w sar");
+         $self->sudo("rm /tmp/sar*");
+      }
+      
+      if ( $self->{sar}->{watch_cpu_usage} ) {
+         my $sar_cmd = "sar -P ALL 1 3600 > /tmp/sar.cpu";
+         my $thr = threads->create( 'ClusterSSHNode::run_cmd', $self, $sar_cmd);
+         $thr->detach();
+      }
+      if ( $self->{sar}->{watch_memory_usage} ) {
+         my $sar_cmd = "sar -r 1 3600 > /tmp/sar.mem";
+         my $thr = threads->create( 'ClusterSSHNode::run_cmd', $self, $sar_cmd);
+         $thr->detach();
+      }
+      if ( $self->{sar}->{watch_network_usage} ) {
+         my $sar_cmd = "sar -n DEV 1 3600 > /tmp/sar.dev";
+         my $thr = threads->create( 'ClusterSSHNode::run_cmd', $self, $sar_cmd);
+         $thr->detach();
+      }
+      if ( $self->{sar}->{watch_disk_usage} ) {
+         my $sar_cmd = "sar -d 1 3600 > /tmp/sar.disk";
+         my $thr = threads->create( 'ClusterSSHNode::run_cmd', $self, $sar_cmd);
+         $thr->detach();
+      }
+   };
+   $async_thread->detach();
+}
+
+sub stop_profilers {
+	my ( $self ) = @_;
+
+   if ( scalar keys %{$self->{sar}} > 0) {
+      $self->sudo( "killall -q -w sar" );
+   }
+
+	my $cmd = "";
+	if ($self->{sar}->{watch_cpu_usage}) {
+		$cmd .= "scp $SSH_OPTS -q $self:/tmp/sar.cpu sar.$self.cpu;";
+	}
+	if ($self->{sar}->{watch_memory_usage}) {
+		$cmd .= "scp $SSH_OPTS -q $self:/tmp/sar.mem sar.$self.mem;";
+	}
+	if ($self->{sar}->{watch_network_usage} ) {
+		$cmd .= "scp $SSH_OPTS -q $self:/tmp/sar.dev sar.$self.dev;";
+	}
+	if ($self->{sar}->{watch_disk_usage}) {
+		$cmd .= "scp $SSH_OPTS -q $self:/tmp/sar.disk sar.$self.disk;";
+	}
+
+	system $cmd;
+   $self->{profiling} = 0;
+}
+
+package ClusterSSH;
+
+sub new {
+	my $nodes = $_[0];
+	my $self  = {};
+	bless $self;
+
+	$self->{nodes}               = {map { $_ => ClusterSSHNode::new($_) } @$nodes};
+   
+	$self->{sar}->{watch_memory_usage}  = 0;
+	$self->{sar}->{watch_cpu_usage}     = 0;
+	$self->{sar}->{watch_network_usage} = 0;
+	$self->{sar}->{watch_disk_usage}    = 0;
+
+	return $self;
+}
+
+sub _run {
+	my $self           = $_[0];
+	my $to_exec        = $_[1];
+	my $env            = $_[2];
+	my $opt            = $_[3];
+	my $nodes          = $self->{nodes};
+   $self->{opt}       = $opt;
+	$self->{results}   = ();
+
+   # First start profilers if needed
+	if ( $opt->{profile} ) {
+		for my $n (values %$nodes) {
+         $n->start_profilers($self->{sar});
+      }
+	}
+
+	for my $k (keys %$nodes) {
+		my $thr;
+		if ($opt->{is_scriptfile}) {
+			$thr = threads->create( 'ClusterSSHNode::run_scriptfile', $nodes->{$k}, $to_exec, $env, $opt );
+		} else {
+			$thr = threads->create( 'ClusterSSHNode::run_cmd', $nodes->{$k}, $to_exec, $env, $opt );
+		}
+		push @{ $self->{threads}->{$k} }, $thr;
+	}
+
+	if ($opt->{do_not_join}) {
+		return;
+	} else {
+		return $self->wait_threads;
+	}
+}
+
+########################
+## External functions ##
+########################
+
+sub wait_threads {
+	my $self           = $_[0];
+	my %to_return      = ();
+
+	for my $n ( keys %{ $self->{threads} } ) {
+		my $r      = "";
+		my $ttable = $self->{threads}->{$n};
+		for my $t (@$ttable) {
+			$r .= $t->join() // "";
+		}
+		$to_return{$n} = $r;
+	}
+
+	## Killing profilers
+	if($self->{opt}->{profile}){
+		my @profiling_threads = ();
+		for my $n ( keys %{ $self->{threads} } ) {
+			my $thr = threads->create( 'ClusterSSHNode::stop_profilers', $self->{nodes}->{$n});
+			push @profiling_threads, $thr;
+		}
+		for my $thr (@profiling_threads) {
+			$thr->join();
+		}
+	}
+	## End
+	
+	$self->{threads} = undef;
+	$self->{results} = \%to_return;
+	return \%to_return;
+}
+
+sub run_scriptfile {
+	my ( $self, $to_exec, $env, $opt ) = @_;
+	return $self->_run( $to_exec, $env, {
+         is_scriptfile => 1,
+         defined $opt ? %$opt : (),
+      });
+}
+
+sub run_cmd {
+	my ( $self, $to_exec, $env, $opt ) = @_;
+	return $self->_run( $to_exec, $env, {
+         is_scriptfile => 0,
+         defined $opt ? %$opt : (),
+      });
+}
+
+1;
+
