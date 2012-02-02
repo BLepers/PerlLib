@@ -10,14 +10,10 @@ $Data::Dumper::Maxdepth = 3;
 
 
 my $file = File::CachedFile::new($ARGV[0]);
-#$file->{sar_min_time_to_consider} = 5;
-#$file->{sar_max_time_to_consider} = -5;
-#$file->{sar_min_time_to_consider} = 300;
-#$file->{sar_max_time_to_consider} = 480;
+$file->{sar_min_time_to_consider} = 360;
+$file->{sar_max_time_to_consider} = -180;
 
-#my $result = $file->sar_parse({gnuplot=>0});
 my $result = $file->sar_parse({gnuplot=>1});
-#my $result = $file->sar_parse({gnuplot=>1, gnuplot_file=>1});
 print "$result\n";
 $result->{raw} = "SUPPRESSED"; #So that the output remains readable
 print "Sar output (->{raw} suppressed):\n".Dumper($result);
