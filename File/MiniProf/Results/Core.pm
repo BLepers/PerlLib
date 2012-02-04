@@ -22,11 +22,17 @@ sub per_core {
    my @events = map { $self->_scripted_value_to_event($_, $info) } (0..$tsize);
    #print main::Dumper(\@events);
    for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
+      my $to_plot = 0;
       for my $i (0..$tsize) {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
-         $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.$i} = $avg;
+         
+         if($avg > 0){
+            $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.$i} = $avg;
+            $to_plot = 1;
+         }
       }
-      if($opt->{gnuplot} && ((!defined $parse_options->{$info->{name}}->{gnuplot}) || ($parse_options->{$info->{name}}->{gnuplot} != 0)) ) {
+
+      if($to_plot && $opt->{gnuplot} && ((!defined $parse_options->{$info->{name}}->{gnuplot}) || ($parse_options->{$info->{name}}->{gnuplot} != 0)) ) {
          if(!defined($opt->{gnuplot_max_cpu}) || $core < $opt->{gnuplot_max_cpu}) {
             $plot =  File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name}.' on core '.$core);
 
@@ -42,11 +48,13 @@ sub per_core {
             }
       
             $plot->gnuplot_set_plot_titles(map($parse_options->{$info->{name}}->{legend}." $_", (0..$tsize)));
+            
             $plot->gnuplot_plot_many( 
                @plota
             );
          }
       }
+
    }
 }
 

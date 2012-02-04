@@ -85,6 +85,7 @@ sub sum_1_div_sum_0_global {
       $sum_evt0 += $sum0;
       $sum_evt1 += $sum1;
    }
+   
    $info->{results} = $sum_evt1 / $sum_evt0;
 
    if($opt->{gnuplot}) {

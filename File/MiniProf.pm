@@ -60,7 +60,7 @@ my %parse_options = (
    
    L3_MISS_INST => {
       name => 'L3 misses per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISS' ],
+      events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISSES' ],
       value => 'sum_1/sum_0-global', 
    },
    
@@ -162,10 +162,11 @@ my %parse_options = (
       gnuplot_range => [ 0, 100 ],
    },
    
-   HTDPC => {
-      name => 'Usage of HT Links',
-      events => [ 'CLK_UNHALTED', 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
-      value => 'htdpc',
+   HT_DATA => {
+      name => 'HT Links data',
+      events => [ 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
+      value => 'per_core',
+      legend => 'HT link',
    },
 
    CPU_DRAM => {
@@ -197,6 +198,18 @@ my %parse_options = (
       events => ['RETIRED_INSTR', 'CPUDRAM_TO_ALL'],
       value => 'sum_1/sum_0-global',
    },
+   
+   DRAM_RW_RATIO => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ_WRITE', 'MCR_READ'],
+      value => 'sum_1/sum_0',
+   },
+   
+#   DRAM_PREFETCH_READ_RATIO => {
+#      name => 'DRAM read/write ratio',
+#      events => ['MCR_READ', 'MCR_PREFETCH'],
+#      value => 'sum_1/sum_0',
+#   }
 );
 
 sub _find_something_to_do {
@@ -211,8 +224,8 @@ sub _find_something_to_do {
       for my $evt (@{$parse_options{$known_evt}->{events}}) {
          my $match = 0;
          for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
-            if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/$evt/)
-               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/$evt/i)) {
+            if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
+               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)) {
                $match = 1;
                $matches{$evt} = $avail_evt;
                last;
