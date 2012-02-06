@@ -54,7 +54,7 @@ Returns:
 my %parse_options = (
    IPC => {
       name => 'IPC',                    
-      events => [ 'CLK_UNHALTED', 'RETIRED' ],
+      events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
    
@@ -205,11 +205,19 @@ my %parse_options = (
       value => 'sum_1/sum_0',
    },
    
-#   DRAM_PREFETCH_READ_RATIO => {
-#      name => 'DRAM read/write ratio',
-#      events => ['MCR_READ', 'MCR_PREFETCH'],
-#      value => 'sum_1/sum_0',
-#   }
+   DRAM_RW_RATIO_NO_PREFECTH => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ_WRITE', 'MCR_READ', 'MCR_PREFETCH'],
+      value => '(sum_1-sum_2)/sum_0',
+   },
+   
+   DRAM_READ_PREFETCH_RATIO => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ', 'MCR_PREFETCH'],
+      value => 'sum_1/sum_0',
+   }
+   
+   
 );
 
 sub _find_something_to_do {
@@ -265,6 +273,9 @@ sub _do_info {
       }
       case 'sum_1/sum_0-global' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_global($self, $info, \%parse_options, \%opt);
+      }
+      case '(sum_1-sum_2)/sum_0' {
+         File::MiniProf::Results::Avg::sum_1_sum_2_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
       }
       case 'ht_link' {
          File::MiniProf::Results::HT::ht_link($self, $info, \%parse_options, \%opt);
