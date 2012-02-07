@@ -66,7 +66,7 @@ my %parse_options = (
    
    L3_RATIO => {
       name => 'L3 Miss Ratio',                    
-      events => [ 'L3_ACCESSES', 'L3_MISS' ],
+      events => [ 'L3_ACCESSES', 'L3_MISSES' ],
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },

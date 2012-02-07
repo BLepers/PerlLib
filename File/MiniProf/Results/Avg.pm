@@ -145,7 +145,7 @@ sub sum_1_div_sum_0_global {
       $sum_evt1 += $sum1;
    }
    
-   $info->{results} = $sum_evt1 / $sum_evt0;
+   $info->{results}->{ALL} = $sum_evt1 / $sum_evt0;
 
    if($opt->{gnuplot}) {
       if(!defined($opt->{gnuplot_max_cpu}))  {
@@ -156,8 +156,8 @@ sub sum_1_div_sum_0_global {
             for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
                my $val_0 = $self->{miniprof}->{raw}->{$core}->{$event_0}->{val}->[$i];
                my $val_1 = $self->{miniprof}->{raw}->{$core}->{$event_1}->{val}->[$i];
-               $gnu_sum_evt0 += $val_0;
-               $gnu_sum_evt1 += $val_1;
+               $gnu_sum_evt0 += $val_0 if(defined $val_0);
+               $gnu_sum_evt1 += $val_1 if(defined $val_1);
             }
             push(@vals, $gnu_sum_evt0?$gnu_sum_evt1/$gnu_sum_evt0:0);
          }
