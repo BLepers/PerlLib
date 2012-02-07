@@ -186,7 +186,7 @@ my %parse_options = (
       legend => 'Local DRAM of node',
    },
 
-   CPU_DRAM_PER_INST => {
+   MAPI => {
       name => 'CPU to all DRAM per instruction',
       events => [ 'RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL' ],
       value => 'sum_1/sum_0-global',
