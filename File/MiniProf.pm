@@ -52,6 +52,7 @@ Returns:
 =cut
 
 my %parse_options = (
+   ## Processed measurements
    IPC => {
       name => 'IPC',                    
       events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
@@ -70,7 +71,54 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
+   
+   HT_LINK => {
+      name => 'Usage of HT Links',
+      events => [ '403ff8', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
+      value => 'ht_link',
+      gnuplot_range => [ 0, 100 ],
+   },
+   
+   CPU_DRAM => {
+      name => 'CPU to DRAM',
+      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+      value => 'per_core',
+      legend => 'DRAM of node',
+      #gnuplot_range => [ 0, 250 ],
+   },
 
+   LOCAL_DRAM_RATIO => {
+      name => 'CPU to DRAM locality',
+      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+      value => 'locality_per_node',
+      legend => 'Local DRAM of node',
+   },
+
+   MAPI => {
+      name => 'CPU to all DRAM per instruction',
+      events => [ 'RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL' ],
+      value => 'sum_1/sum_0-global',
+   },
+   
+   DRAM_RW_RATIO => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ_WRITE', 'MCR_READ'],
+      value => 'sum_1/sum_0',
+   },
+   
+   DRAM_RW_RATIO_NO_PREFECTH => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ_WRITE', 'MCR_READ', 'MCR_PREFETCH'],
+      value => '(sum_1-sum_2)/sum_0',
+   },
+   
+   DRAM_READ_PREFETCH_RATIO => {
+      name => 'DRAM read/write ratio',
+      events => ['MCR_READ', 'MCR_PREFETCH'],
+      value => 'sum_1/sum_0',
+   },
+   
+   ##### Not really processed data
    LATENCY_0 => {
       name => 'Latency to node 0',
       events => [ '100401fE3', '100401fE2' ], #Number of mem accesses monitores, latency of these accesses
@@ -155,68 +203,12 @@ my %parse_options = (
       gnuplot => 0,
    },
 
-   HT_LINK => {
-      name => 'Usage of HT Links',
-      events => [ '403ff8', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
-      value => 'ht_link',
-      gnuplot_range => [ 0, 100 ],
-   },
-   
    HT_DATA => {
       name => 'HT Links data',
       events => [ 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
       value => 'per_core',
       legend => 'HT link',
-   },
-
-   CPU_DRAM => {
-      name => 'CPU to DRAM',
-      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
-      #events => [ 'CPUDRAM_TO_NODE0', 'CPUDRAM_TO_NODE1', 'CPUDRAM_TO_NODE2', 'CPUDRAM_TO_NODE3' ],
-      #events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1'],
-      value => 'per_core',
-      legend => 'DRAM of node',
-      #gnuplot_range => [ 0, 250 ],
-   },
-
-   LOCAL_DRAM_RATIO => {
-      name => 'CPU to DRAM locality',
-      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
-      value => 'locality_per_node',
-      legend => 'Local DRAM of node',
-   },
-
-   MAPI => {
-      name => 'CPU to all DRAM per instruction',
-      events => [ 'RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL' ],
-      value => 'sum_1/sum_0-global',
-   },
- 
-   #Same as previous rule but with different events name
-   CPU_DRAM_PER_INST2 => {
-      name => 'CPU to all DRAM per instruction',
-      events => ['RETIRED_INSTR', 'CPUDRAM_TO_ALL'],
-      value => 'sum_1/sum_0-global',
-   },
-   
-   DRAM_RW_RATIO => {
-      name => 'DRAM read/write ratio',
-      events => ['MCR_READ_WRITE', 'MCR_READ'],
-      value => 'sum_1/sum_0',
-   },
-   
-   DRAM_RW_RATIO_NO_PREFECTH => {
-      name => 'DRAM read/write ratio',
-      events => ['MCR_READ_WRITE', 'MCR_READ', 'MCR_PREFETCH'],
-      value => '(sum_1-sum_2)/sum_0',
-   },
-   
-   DRAM_READ_PREFETCH_RATIO => {
-      name => 'DRAM read/write ratio',
-      events => ['MCR_READ', 'MCR_PREFETCH'],
-      value => 'sum_1/sum_0',
-   }
-   
+   },   
    
 );
 
