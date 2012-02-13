@@ -190,7 +190,8 @@ sub sar_parse_disk {
          (my $tps, my $rtps, my $wtps, my $bread, my $bwritten) = ($line =~ m/^\d+:\d+:\d+\s+(?:[AP]M\s+)?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*/);
 
          if (!defined($bread)) {
-            print "SAR.pm sees undefined line : ".$line;
+            $line =~ s/\n$//;
+            print "[$self] Undefined line : ".$line."\n";
             next;
          }
 
@@ -247,7 +248,8 @@ sub sar_parse_disk2 {
          (my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
 
          if (!defined($wr_sec)) {
-            print "SAR.pm sees undefined line : ".$line;
+            $line =~ s/\n$//;
+            print "[$self] Undefined line : ".$line."\n";
             next;
          }
 
@@ -343,7 +345,8 @@ sub sar_parse_mem {
          (my $memfree, my $memused, my $percent_memused, my $buffers, my $cached, my $commit, my $percent_commit) = ($line =~ m/^\d+:\d+:\d+\s+(?:[AP]M\s+)?(\d+)\s+(\d+)\s+(\d+\.\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+(?:\.\d+)?)\s*/);
 
          if (!defined($percent_memused)) {
-            print "SAR.pm sees undefined line : ".$line;
+            $line =~ s/\n$//;
+            print "[$self] Undefined line : ".$line."\n";
             next;
          }
 
@@ -445,7 +448,8 @@ sub sar_parse_cpu {
       } elsif($line =~ m/\d\d:\d\d:\d\d/ && $line !~ m/all|CPU/) {
          (my $proc, my $user, my $nice, my $sys, my $iowait, my $steal, my $idle) = ($line =~ m/(\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)$/);
          if (!defined($proc)) {
-            print "SAR.pm sees undefined line : ".$line;
+            $line =~ s/\n$//;
+            print "[$self] Undefined line : ".$line."\n";
             next;
          }
          if($user + $nice + $sys + $iowait + $steal + $idle == 0) {
@@ -545,11 +549,12 @@ sub sar_parse {
          } elsif($line =~ m/bread\/s/) {
             return $self->sar_parse_disk($opt);
          }  else {
-            (my $am, my $info) = ($line =~ m/(AM|PM)\s+([^\s]+)/);
-            die "Found no suitable way to interpret file $self (sar counter=$info)";
+            print "[$self] Found no suitable way to interpret file\n";
+            return undef;
          }
       }
    }
-   return "File $self is not a valid sar file";
+   print "[$self] Not a valid sar file\n";
+   return undef;
 }
 1;

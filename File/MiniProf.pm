@@ -315,7 +315,7 @@ sub miniprof_parse {
       (my $event, my $core, my $time, my $value) = ($line =~ m/(\d+)\t(\d+)\t(\d+)\t(\d+)/);
       
       if(!defined $event || !defined $core || !defined $time || !defined $value){
-         print "Warning: found an unknown/incomplete line: $line\n";
+         print "[$self] Unknown/incomplete line: $line\n";
          next;
       }
       
