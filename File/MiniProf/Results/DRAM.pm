@@ -13,14 +13,6 @@ package File::MiniProf::Results::DRAM;
 use File::MiniProf;
 
 #[ 'CPU_DRAM_Node0', 'CPU_DRAM_Node1', 'CPU_DRAM_Node2', 'CPU_DRAM_Node3' ],
-sub _get_local_dram {
-   my $local_dram = $_[0];
-   $local_dram = 1 if ( $_[0] == 3 );
-   $local_dram = 3 if ( $_[0] == 1 );
-   
-   return $local_dram;
-}
-
 sub local_dram_usage {
    my ( $self, $info, $parse_options, $opt ) = @_;
    my $plot;
@@ -41,7 +33,7 @@ sub local_dram_usage {
          $sum_all += $sum;
       }
 
-      my $local_dram = _get_local_dram($core);
+      my $local_dram = File::MiniProf::_local_dram_fun($self, $core, $opt->{local_dram_fun});
 
       my ( $avg, $sum, $count ) = File::MiniProf::_miniprof_get_average_and_sum( $self->{miniprof}->{raw}->{$core}, $events[$local_dram] );
       
@@ -68,7 +60,7 @@ sub local_dram_usage {
 #      my @plota;
 #      
 #      for my $die ( 0 .. 3 ) {
-#         my $local_dram = _get_local_dram($die);
+#         my $local_dram = &{$local_dram_fun}($die);
 #         my @vals = ();
 #         for ( my $i = 0 ; $i < scalar( @{ $self->{miniprof}->{raw}->{$die}->{ $events[0] }->{val} } ) ; $i++ ) {
 #            my $val_0 = $self->{miniprof}->{raw}->{$die}->{ $events[$local_dram] }->{val}->[$i];    # LOCAL

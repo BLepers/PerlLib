@@ -212,6 +212,37 @@ my %parse_options = (
    
 );
 
+
+sub _local_dram_fun {
+   my ($self, $core, $local_dram_fun) = @_;
+   
+   
+   if(defined $self->{memory_mapping}) {
+      my %mapping = %{$self->{memory_mapping}};
+      my $local_dram = -1;
+      for my $d (keys %mapping) {
+         for my $c (@{$mapping{$d}}) {
+            if($c == $core) {
+               $local_dram = $d;
+               last;
+            } 
+         }
+         
+         last if ($local_dram != -1);
+      }
+      
+      die "Did not find any die for core $core\n" if ($local_dram == -1);
+      return $local_dram;
+   }
+   elsif (defined $local_dram_fun) {
+      return &{$local_dram_fun} ($core);
+   }
+   else {
+      print "I don't know what's the local DRAM. Exiting...\n";
+      exit;
+   }
+}
+
 sub _find_something_to_do {
    my ($self) = @_;
    if(!defined($self->{miniprof}->{events})) {
@@ -291,6 +322,7 @@ sub miniprof_parse {
    my ($self, %opt) = @_;
    my $freq;
    while (my $line = <$self>) {
+      #print $line;
       if($line =~ m/#Event (\d): ([^\s]+) \((\w+)\)/) {
          $self->{miniprof}->{events}->{$1}->{name} = $2;
          $self->{miniprof}->{events}->{$1}->{hwc_value} = $3;
@@ -299,11 +331,23 @@ sub miniprof_parse {
          $self->{miniprof}->{freq} = $1;
          $freq = $1;
       }
+      elsif ($line =~ m/#Node\s+(\d+)\s+:\s+(.*)/) {
+         my @cores;
+         my $cores_s = $2;
+         my $node = $1;
+         while($cores_s =~ m/(\d+)/g){
+            #print "Find core $1 for node $node\n";
+            push @cores, int($1);
+         }
+         $self->{memory_mapping}->{$node} = \@cores;
+         $freq = $1;
+      }
 
       last if($line =~ m/#Event	Core/);
       next if($line =~ m/^#/);
       next if($line =~ m/^signal/);
    }
+   
    $self->_find_something_to_do;
    
    my $first_time;

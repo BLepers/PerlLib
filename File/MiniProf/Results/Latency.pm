@@ -10,14 +10,6 @@ use File::Utils;
 package File::MiniProf::Results::Latency;
 use File::MiniProf;
 
-sub _get_local_dram {
-   my $local_dram = $_[0];
-   $local_dram = 1 if ( $_[0] == 3 );
-   $local_dram = 3 if ( $_[0] == 1 );
-   
-   return $local_dram;
-}
-
 sub sum {
    my ($self, $info, $parse_options, $opt) = @_;
 
@@ -31,7 +23,7 @@ sub sum {
       for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
          my ($avg0, $sum0, $count0) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_0 );
          
-         my $local_dram = _get_local_dram($core);
+         my $local_dram = File::MiniProf::_local_dram_fun($self, $core, $opt->{local_dram_fun});
          #print "$info->{name}, core $core, local dram $local_dram --> $sum0\n";
          
          $glob_sum_0 += $sum0;
