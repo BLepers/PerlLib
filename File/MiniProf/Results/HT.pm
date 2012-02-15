@@ -25,7 +25,7 @@ sub ht_link {
 
          next if ($avg_all == 0);
 
-         $info->{results}->{$core}->{'ht_link'.$link} = 1. - $avg_link/$avg_all; #HT Usage : 0 = good, 1 = bad
+         $info->{results}->{$core}->{'ht_link'.$link} = 1. - $sum_link/$sum_all; #HT Usage : 0 = good, 1 = bad
       }
 
       if($opt->{gnuplot} && defined $info->{results}->{$core}) {
