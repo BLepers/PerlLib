@@ -74,7 +74,7 @@ my %parse_options = (
    
    HT_LINK => {
       name => 'Usage of HT Links',
-      events => [ '403ff8', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
+      events => [ 'HT_LINK\d', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
       value => 'ht_link',
       gnuplot_range => [ 0, 100 ],
    },
