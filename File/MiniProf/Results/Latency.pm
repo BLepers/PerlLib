@@ -17,7 +17,7 @@ sub sum {
    my $glob_sum_0 = 0;
    my $local_sum_0 = 0;
    
-   if($info->{name} =~ m/READ_CMD_REQUESTS_(\d+)/ || $info->{name} =~ m/READ_CMD_LATENCY_(\d+)/){
+   if($info->{name} =~ m/CMD_REQUESTS_(\d+)/ || $info->{name} =~ m/CMD_LATENCY_(\d+)/){
       my $target_node = $1;
                  
       for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
@@ -41,7 +41,7 @@ sub sum {
       #print main::Dumper($info->{results});
    }
    else {
-      die "This function encounterd an error\n";
+      die "This function encounterd an error";
    }
 }
 
