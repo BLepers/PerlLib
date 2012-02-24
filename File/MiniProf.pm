@@ -455,6 +455,7 @@ sub miniprof_parse {
       $time = ($time-$first_time)/$freq;
 
       #TODO: ignore time below a defined threshold
+      #print "$opt{miniprof_mintime}\t$opt{miniprof_maxtime}\n";
       next if( 
          ((defined $opt{miniprof_mintime}) && $time < $opt{miniprof_mintime}) 
          || 
