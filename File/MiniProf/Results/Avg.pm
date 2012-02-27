@@ -145,6 +145,11 @@ sub sum_1_div_sum_0_global {
       $sum_evt1 += $sum1;
    }
    
+   if(!defined $sum_evt0 || !defined $sum_evt1) {
+      printf "Nothing to analyse...\n";
+      return undef;
+   }
+   
    $info->{results}->{ALL} = $sum_evt1 / $sum_evt0;
 
    if($opt->{gnuplot}) {

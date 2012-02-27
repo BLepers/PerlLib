@@ -65,8 +65,93 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    },
    
+   L2_MISS_INST => {
+      name => 'L2 misses per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L1_MISS_INST => {
+      name => 'L1 misses per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L1D_MISSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L3_ACCESS_INST => {
+      name => 'L3 ACCESSes per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L3_ACCESSES' ],
+      value => 'sum_1/sum_0-global', 
+   },
+   
+   L2_ACCESS_INST => {
+      name => 'L2 ACCESSes per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L1_ACCESS_INST => {
+      name => 'L1 ACCESSes per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L1D_ACCESSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2APPI => {
+      name => 'L2 Data accesses caused by prefetcher attempts per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_PREFETCH' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2ADCFPI => {
+      name => 'L2 Data accesses caused by instruction cache fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_DC_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2AICFPI => {
+      name => 'L2 Data accesses caused by data cache fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_IC_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2ATLBFPI => {
+      name => 'L2 Data accesses caused by tlb fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_TLB_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2MDCFPI => {
+      name => 'L2 Data misses caused by instruction cache fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_DC_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2MICFPI => {
+      name => 'L2 Data misses caused by data cache fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_IC_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2MTLBFPI => {
+      name => 'L2 Data misses caused by tlb fill per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_TLB_FILL' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   
+   L2MPPI => {
+      name => 'L2 Data misses caused by prefetcher attempts per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_PREFETCH' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   MCTPPI => {
+      name => 'Memory controller attempts per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'MCR_PREFETCH' ],
+      value => 'sum_1/sum_0-global', 
+   },
+   
    L3_RATIO => {
-      name => 'L3 Miss Ratio',                    
+      name => 'L3 Miss Ratio',     
       events => [ 'L3_ACCESSES', 'L3_MISSES' ],
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
@@ -455,6 +540,7 @@ sub miniprof_parse {
       $time = ($time-$first_time)/$freq;
 
       #TODO: ignore time below a defined threshold
+      #print "$opt{miniprof_mintime}\t$opt{miniprof_maxtime}\n";
       next if( 
          ((defined $opt{miniprof_mintime}) && $time < $opt{miniprof_mintime}) 
          || 
