@@ -35,6 +35,12 @@ sub ibsprofiler_parse {
       elsif($line =~ m/\[Core (\d+)\] average access latency (\d+)/){
          $self->{ibsprofiler}->{global_accesses_latency}->{$1} = $2;
       }
+      elsif($line =~ m/\[Core (\d+)\] number of load operations (\d+)/){
+         $self->{ibsprofiler}->{nb_ld_op}->{$1} = $2;
+      }
+      elsif($line =~ m/\[Core (\d+)\] number of store operations (\d+)/){
+         $self->{ibsprofiler}->{nb_st_op}->{$1} = $2;
+      }
       elsif($line =~ m/\[Core (\d+)\] (\d+) IBS interrupts, (\d+) avg time/){
          $self->{ibsprofiler}->{nb_interrupts}->{$1} = $2;
          $self->{ibsprofiler}->{nb_interrupts}->{GLOBAL} += $2;
@@ -56,7 +62,19 @@ sub ibsprofiler_parse {
       elsif($line =~ m/\[GLOBAL\] average access latency (\d+)/){
          $self->{ibsprofiler}->{global_accesses_latency}->{GLOBAL} = $1;
       }
+      elsif($line =~ m/\[GLOBAL\] number of load operations (\d+)/){
+         $self->{ibsprofiler}->{nb_ld_op}->{GLOBAL} = $1;
+      }
+      elsif($line =~ m/\[GLOBAL\] number of store operations (\d+)/){
+         $self->{ibsprofiler}->{nb_st_op}->{GLOBAL} = $1;
+      }
       
+      elsif($line =~ m/IBS Frequency: (\d+)/){
+         $self->{ibsprofiler}->{freq} = $1;
+      }
+      elsif($line =~ m/IBS DRAM only: (\d)/){
+         $self->{ibsprofiler}->{dram_only} = $1;
+      }
    }
    
    return $self->{ibsprofiler};
