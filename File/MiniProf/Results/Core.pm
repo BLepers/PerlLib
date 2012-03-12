@@ -28,6 +28,7 @@ sub per_core {
          
          if($avg > 0){
             $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.$i} = $avg;
+            $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.$i} += $avg;
             $to_plot = 1;
          }
       }

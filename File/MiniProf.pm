@@ -96,19 +96,19 @@ my %parse_options = (
    },
    
    L2APPI => {
-      name => 'L2 Data accesses caused by prefetcher attempts per retired instructions',                    
+      name => 'L2 accesses caused by prefetcher attempts per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_PREFETCH' ],
       value => 'sum_1/sum_0', 
    },
    
    L2ADCFPI => {
-      name => 'L2 Data accesses caused by instruction cache fill per retired instructions',                    
+      name => 'L2 accesses caused by instruction cache fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_DC_FILL' ],
       value => 'sum_1/sum_0', 
    },
    
    L2AICFPI => {
-      name => 'L2 Data accesses caused by data cache fill per retired instructions',                    
+      name => 'L2 accesses caused by data cache fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_IC_FILL' ],
       value => 'sum_1/sum_0', 
    },
@@ -120,26 +120,26 @@ my %parse_options = (
    },
    
    L2MDCFPI => {
-      name => 'L2 Data misses caused by instruction cache fill per retired instructions',                    
+      name => 'L2 misses caused by instruction cache fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_DC_FILL' ],
       value => 'sum_1/sum_0', 
    },
    
    L2MICFPI => {
-      name => 'L2 Data misses caused by data cache fill per retired instructions',                    
+      name => 'L2 misses caused by data cache fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_IC_FILL' ],
       value => 'sum_1/sum_0', 
    },
    
    L2MTLBFPI => {
-      name => 'L2 Data misses caused by tlb fill per retired instructions',                    
+      name => 'L2 misses caused by tlb fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_TLB_FILL' ],
       value => 'sum_1/sum_0', 
    },
    
    
    L2MPPI => {
-      name => 'L2 Data misses caused by prefetcher attempts per retired instructions',                    
+      name => 'L2 misses caused by prefetcher attempts per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_PREFETCH' ],
       value => 'sum_1/sum_0', 
    },
@@ -200,6 +200,12 @@ my %parse_options = (
    DRAM_READ_PREFETCH_RATIO => {
       name => 'DRAM read/write ratio',
       events => ['MCR_READ', 'MCR_PREFETCH'],
+      value => 'sum_1/sum_0',
+   },
+   
+   LOCKPI => {
+      name => 'Bus locking per instruction',
+      events => [ 'RETIRED_INSTRUCTIONS', 'LOCKED_OPERATIONS' ],
       value => 'sum_1/sum_0',
    },
    
@@ -381,6 +387,14 @@ my %parse_options = (
       events => [ 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
       value => 'per_core',
       legend => 'HT link',
+   },
+   
+   LOCK => {
+      name => 'Bus locking',
+      events => [ 'LOCKED_OPERATIONS' ],
+      value => 'per_core',
+      legend => 'LOCK',
+      
    },   
    
 );
