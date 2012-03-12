@@ -4,15 +4,11 @@ use warnings;
 use FindBin;
 use lib "$FindBin::Bin/../PerlLib";
 use File::Utils;
-use File::NumaWatcher;
+use File::IBSProfiler;
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 3;
-
 
 my $file = File::CachedFile::new($ARGV[0]);
 
-my $result = $file->nw_parse({gnuplot=>1});
-$result->{raw} = undef;
-$result->{analysed} = undef;
+my $result = $file->ibsprofiler_parse();
 
 print Dumper($result);

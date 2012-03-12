@@ -19,7 +19,7 @@ use File::BProf;
 use File::NumaWatcher;
 
 package File::CachedFile;
-our @ISA = qw(File::Specweb File::Sar File::MiniProf File::DBBench File::BProf File::Slg File::SWS File::NumaWatcher);
+our @ISA = qw(File::Specweb File::Sar File::MiniProf File::DBBench File::BProf File::Slg File::SWS File::NumaWatcher File::IBSProfiler);
 
 use overload
    '<>' => \&iterate,
