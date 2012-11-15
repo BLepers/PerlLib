@@ -10,7 +10,6 @@ use Data::Dumper;
 use FindBin;
 use lib "$FindBin::Bin";
 use File::Specweb;
-use File::DBBench;
 use File::SWS;
 use File::Sar;
 use File::Slg;
@@ -19,7 +18,7 @@ use File::BProf;
 use File::NumaWatcher;
 
 package File::CachedFile;
-our @ISA = qw(File::Specweb File::Sar File::MiniProf File::DBBench File::BProf File::Slg File::SWS File::NumaWatcher File::IBSProfiler);
+our @ISA = qw(File::Specweb File::Sar File::MiniProf File::BProf File::Slg File::SWS File::NumaWatcher);
 
 use overload
    '<>' => \&iterate,

@@ -245,7 +245,7 @@ sub sar_parse_disk2 {
       if($line =~ m/tps/) {
          ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
       } elsif($line =~ m/\d\d:\d\d:\d\d/ && $line !~ m/tps/) {
-         (my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
+         (my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.|scd.)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
 
          if (!defined($wr_sec)) {
             $line =~ s/\n$//;

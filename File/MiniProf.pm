@@ -51,12 +51,24 @@ Returns:
    }
 =cut
 
+my $default_minimum_percentage_running = 0.1;
+
 my %parse_options = (
    ## Processed measurements
    IPC => {
       name => 'IPC',                    
       events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
+   },
+   DTLB_MISS_INST => {
+      name => 'L1 and L2 DTLB miss per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'DTLB_MISS' ],
+      value => 'sum_1/sum_0', 
+   },
+   ITLB_MISS_INST => {
+      name => 'L1 and L2 ITLB miss per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'ITLB_MISS' ],
+      value => 'sum_1/sum_0', 
    },
    
    L3_MISS_INST => {
@@ -208,7 +220,13 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'LOCKED_OPERATIONS' ],
       value => 'sum_1/sum_0',
    },
-   
+
+   DCMR => {
+      name => 'DCMR',
+      events => [ 'DCR_ALL', 'DCR_MODIFIED' ],
+      value => 'sum_1/sum_0',
+   },
+
    ##### Not really processed data
    READ_LATENCY_0 => {
       name => 'Latency to node 0',
@@ -534,42 +552,125 @@ sub miniprof_parse {
       next if($line =~ m/^#/);
       next if($line =~ m/^signal/);
    }
-   
+
    $self->_find_something_to_do;
    
    my $first_time;
+   my $line_no = 0;
+   my %filtered;
+
    while (my $line = <$self>) {
+      $line_no++;
 
       next if($line =~ m/^#/);
       next if($line =~ m/^signal/);
 
-      (my $event, my $core, my $time, my $value) = ($line =~ m/(\d+)\t(\d+)\t(\d+)\t(\d+)/);
+      my @content = split(/\s+/, $line); 
+      (my $event, my $core, my $time, my $value) = @content;
       
       if(!defined $event || !defined $core || !defined $time || !defined $value){
-         print "[$self] Unknown/incomplete line: $line\n";
+         print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
          next;
       }
-      
+
+      my $logical_time;
+
+      if(scalar(@content) == 6) {
+         my $percentage_running = $content[4];
+         $logical_time = $content[5];
+
+         if(defined $filtered{$logical_time}) {
+            next;
+         }
+
+         if($percentage_running > 0) {
+            $value /= $percentage_running;
+         }
+         elsif($percentage_running <= 0) {
+            #print "[WARNING] Ignoring, the counter did not run (file ".$self->{filename}.", line $line_no): $line";
+
+            ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
+            $filtered{$logical_time} = "removed";
+
+            ## Remove values that may have been already added
+            for my $c (keys %{$self->{miniprof}->{raw}}) {
+               for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
+                  if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
+                     my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
+
+                     if(($#array_lt >= 0) && ($array_lt[$#array_lt] == $logical_time)) {
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
+                     }
+                  }
+                  else {
+                     print "BUG !\n";
+                     print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
+                     exit;
+                  }
+               }
+            }
+            
+            next;
+         }
+      }
+
       $first_time //= $time;
       $time = ($time-$first_time)/$freq;
 
       #TODO: ignore time below a defined threshold
       #print "$opt{miniprof_mintime}\t$opt{miniprof_maxtime}\n";
-      next if( 
-         ((defined $opt{miniprof_mintime}) && $time < $opt{miniprof_mintime}) 
+
+      if( ((defined $opt{miniprof_mintime}) && $time < $opt{miniprof_mintime}) 
          || 
-         ((defined $opt{miniprof_maxtime}) && $time > $opt{miniprof_maxtime})
-      );
+         ((defined $opt{miniprof_maxtime}) && $time > $opt{miniprof_maxtime})){
+
+         if(defined $logical_time) {
+            ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
+            $filtered{$logical_time} = "removed";
+
+            ## Remove values that may have been already added
+            for my $c (keys %{$self->{miniprof}->{raw}}) {
+               for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
+                  if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
+                     my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
+
+                     if($array_lt[$#array_lt] == $logical_time) {
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
+                     }
+                  }
+                  else {
+                     print "BUG !\n";
+                     print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
+                     exit;
+                  }
+               }
+            }
+         }
+
+         next;
+      }
 
       #print main::Dumper($opt{cores});
       
       if((!defined $opt{cores}) || ($core ~~ @{$opt{cores}})){
          push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{val}}, $value);
          push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{time}}, $time);
+         if(defined $logical_time) {
+            push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{logical_time}}, $logical_time);
+         }
       }
    }
+
+   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n";
+
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
+         #print "Event $evt, core $core : ".(scalar(@{$self->{miniprof}->{raw}->{$core}->{$evt}->{time}}))." entries\n";
+
          my @analyse = _miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $evt);
          $self->{miniprof}->{analysed}->{$core}->{$self->{miniprof}->{events}->{$evt}->{name}} = {
             average => $analyse[0],
@@ -583,6 +684,7 @@ sub miniprof_parse {
          };
       }
    }
+
    for my $evt (@{$self->{miniprof}->{avail_info}}) {
       $self->_do_info($evt, %opt);
    }
@@ -601,12 +703,10 @@ sub _miniprof_get_average_and_sum {
    }
    my @ret;
    if($count != 0) {
-      @ret = ($sum / $count, $sum, $count);
+     @ret = ($sum / $count, $sum, $count);
    } else {
       @ret = (0, $sum, $count);
    }
    $array_ref->{$index.'_analysed'} = \@ret;
    return @ret;
 }
-
-
