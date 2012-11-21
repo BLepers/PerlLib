@@ -230,28 +230,35 @@ my %parse_options = (
    ##### Not really processed data
    READ_LATENCY_0 => {
       name => 'Latency to node 0',
-      events => [ '100401fE3', '100401fE2' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ '100401fE3', '100401fE2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    READ_LATENCY_1 => {
       name => 'Latency to node 1',
-      events => [ '100402fE3', '100402fE2' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ '100402fE3', '100402fE2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    READ_LATENCY_2 => {
       name => 'Latency to node 2',
-      events => [ '100404fE3', '100404fE2' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ '100404fE3', '100404fE2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    READ_LATENCY_3 => {
       name => 'Latency to node 3',
-      events => [ '100408fE3', '100408fE2' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ '100408fE3', '100408fE2' ], #Number of mem accesses monitored, latency of these accesses
+      value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1000 ],
+   },
+
+   READ_LATENCY_GLOB => {
+      name => 'Latency',
+      events => [ '10040ffE3', '10040ffE2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
@@ -316,28 +323,28 @@ my %parse_options = (
    ### CPU Latencies
    CPU_LATENCY_0 => {
       name => 'Latency to node 0',
-      events => [ 'CPU_CMD_NUMBER_N0', 'CPU_CMD_LATENCY_N0' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ 'CPU_CMD_NUMBER_N0', 'CPU_CMD_LATENCY_N0' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    CPU_LATENCY_1 => {
       name => 'Latency to node 1',
-      events => [ 'CPU_CMD_NUMBER_N1', 'CPU_CMD_LATENCY_N1' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ 'CPU_CMD_NUMBER_N1', 'CPU_CMD_LATENCY_N1' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    CPU_LATENCY_2 => {
       name => 'Latency to node 2',
-      events => [ 'CPU_CMD_NUMBER_N2', 'CPU_CMD_LATENCY_N2' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ 'CPU_CMD_NUMBER_N2', 'CPU_CMD_LATENCY_N2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
 
    CPU_LATENCY_3 => {
       name => 'Latency to node 3',
-      events => [ 'CPU_CMD_NUMBER_N3', 'CPU_CMD_LATENCY_N3' ], #Number of mem accesses monitores, latency of these accesses
+      events => [ 'CPU_CMD_NUMBER_N3', 'CPU_CMD_LATENCY_N3' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
    },
