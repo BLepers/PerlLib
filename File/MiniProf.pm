@@ -162,6 +162,20 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    },
    
+   L1_RATIO => {
+      name => 'L1 Miss Ratio',     
+      events => [ '40', '41' ],
+      value => 'sum_1/sum_0', 
+      gnuplot_range => [ 0, 1 ],
+   },
+
+   L2TLB_MISS_RATIO => {
+      name => 'L2 TLB Miss Ratio',     
+      events => [ 'f45', 'f46' ],
+      value => 'sum_0/sum_all', 
+      gnuplot_range => [ 0, 1 ],
+   },
+   
    L3_RATIO => {
       name => 'L3 Miss Ratio',     
       events => [ 'L3_ACCESSES', 'L3_MISSES' ],
@@ -187,6 +201,21 @@ my %parse_options = (
    LOCAL_DRAM_RATIO => {
       name => 'CPU to DRAM locality',
       events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+      value => 'locality_per_node',
+      legend => 'Local DRAM of node',
+   },
+
+   CPU_DRAM2 => {
+      name => 'CPU to DRAM',
+      events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
+      value => 'per_core',
+      legend => 'DRAM of node',
+      #gnuplot_range => [ 0, 250 ],
+   },
+
+   LOCAL_DRAM_RATIO2 => {
+      name => 'CPU to DRAM locality',
+      events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
       value => 'locality_per_node',
       legend => 'Local DRAM of node',
    },
@@ -506,6 +535,9 @@ sub _do_info {
       case 'sum_1/sum_0' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
       }
+      case 'sum_0/sum_all' {
+         File::MiniProf::Results::Avg::sum_0_div_sum_all_per_core($self, $info, \%parse_options, \%opt);
+      }
       case 'sum_1/sum_0-global' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_global($self, $info, \%parse_options, \%opt);
       }
@@ -672,7 +704,7 @@ sub miniprof_parse {
       }
    }
 
-   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n";
+   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n" if(scalar(keys %filtered) > 1);
 
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
