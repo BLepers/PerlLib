@@ -170,7 +170,7 @@ my %parse_options = (
    },
 
    L2TLB_MISS_RATIO => {
-      name => 'L2 TLB Miss Ratio',     
+      name => 'L2 TLB Hit Ratio',     
       events => [ 'f45', 'f46' ],
       value => 'sum_0/sum_all', 
       gnuplot_range => [ 0, 1 ],
