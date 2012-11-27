@@ -60,6 +60,7 @@ my %parse_options = (
       events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
+
    DTLB_MISS_INST => {
       name => 'L1 and L2 DTLB miss per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'DTLB_MISS' ],
@@ -86,6 +87,11 @@ my %parse_options = (
    L1_MISS_INST => {
       name => 'L1 misses per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L1D_MISSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   L1_MISS_INST2 => {
+      name => 'L1 misses per retired instructions',                    
+      events => [ 'c0', '41' ],
       value => 'sum_1/sum_0', 
    },
    
@@ -169,9 +175,15 @@ my %parse_options = (
       gnuplot_range => [ 0, 1 ],
    },
 
-   L2TLB_MISS_RATIO => {
+   L1TLB_MISS_PER_INSTR => { #Counts L1 TLB Miss = (l2 hit + l2 miss) per instruction
+      name => 'L1 TLB Miss per instruction',     
+      events => [ 'f45', 'f46', 'c0' ],
+      value => '(sum_0+sum_1)/sum_2', 
+   },
+
+   L2TLB_HIT_RATIO => {
       name => 'L2 TLB Hit Ratio',     
-      events => [ 'f45', 'f46' ],
+      events => [ 'f45', 'f46' ], #L2 hit / (L2 hit + L2 miss)
       value => 'sum_0/sum_all', 
       gnuplot_range => [ 0, 1 ],
    },
@@ -537,6 +549,9 @@ sub _do_info {
       }
       case 'sum_0/sum_all' {
          File::MiniProf::Results::Avg::sum_0_div_sum_all_per_core($self, $info, \%parse_options, \%opt);
+      }
+      case '(sum_0+sum_1)/sum_2' {
+         File::MiniProf::Results::Avg::sum_0_sum_1_div_sum_2_per_core($self, $info, \%parse_options, \%opt);
       }
       case 'sum_1/sum_0-global' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_global($self, $info, \%parse_options, \%opt);

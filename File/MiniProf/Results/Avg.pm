@@ -10,6 +10,64 @@ use File::MiniProf::Results::Plot;
 package File::MiniProf::Results::Avg;
 use File::MiniProf;
 
+sub sum_0_sum_1_div_sum_2_per_core {
+   my ($self, $info, $parse_options, $opt) = @_;
+   my  $plot;
+   my @gnuplot_xy;
+   if($opt->{gnuplot}) {
+      $plot = File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name});
+   }
+
+   my $event_0 = $self->_scripted_value_to_event(0, $info);
+   my $event_1 = $self->_scripted_value_to_event(1, $info);
+   my $event_2 = $self->_scripted_value_to_event(2, $info);
+
+   my $glob_sum_0 = 0;
+   my $glob_sum_1 = 0;
+   my $glob_sum_2 = 0;
+
+   for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
+      my ($avg0, $sum0, $count0) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_0 );
+      my ($avg1, $sum1, $count1) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_1 );
+      my ($avg2, $sum2, $count2) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_2 );
+
+      $glob_sum_0 += $sum0; 
+      $glob_sum_1 += $sum1; 
+      $glob_sum_2 += $sum2; 
+
+      if($sum2 != 0) {
+         $info->{results}->{$core} = ($sum0+$sum1)/($sum2);
+      }
+
+      if($opt->{gnuplot}) {
+         if(!defined($opt->{gnuplot_max_cpu}) || $core < $opt->{gnuplot_max_cpu}) {
+            my @vals = ();
+            for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$event_0}->{val}}); $i++) {
+               my $val_0 = $self->{miniprof}->{raw}->{$core}->{$event_0}->{val}->[$i];
+               my $val_1 = $self->{miniprof}->{raw}->{$core}->{$event_1}->{val}->[$i];
+               my $avg = ($val_1)?($val_0/($val_0+$val_1)):0;
+               push(@vals, $avg);
+            }
+            push(@gnuplot_xy, $self->{miniprof}->{raw}->{$core}->{$event_0}->{time}); #x
+            push(@gnuplot_xy, \@vals); #y
+         }
+      }
+   }
+
+   if($glob_sum_2){
+      $info->{results}->{ALL} = ($glob_sum_0 + $glob_sum_1) / ($glob_sum_2);
+   }
+   else {
+      $info->{results}->{ALL} = "No samples";
+   }
+
+   if($opt->{gnuplot}) {      
+      $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
+      $plot->gnuplot_plot_many( @gnuplot_xy );
+   }
+}
+
+
 sub sum_0_div_sum_all_per_core {
    my ($self, $info, $parse_options, $opt) = @_;
    my  $plot;

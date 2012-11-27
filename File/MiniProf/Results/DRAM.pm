@@ -23,6 +23,7 @@ sub local_dram_usage {
 
    my $global_sum_local;
    my $global_sum_all;
+   my @accesses_to_node;
    
    my @events = map { $self->_scripted_value_to_event( $_, $info ) } ( 0 .. 3 );
    for my $core ( sort { $a <=> $b } keys %{ $self->{miniprof}->{raw} } ) {
@@ -48,6 +49,7 @@ sub local_dram_usage {
          else{
             $info->{results}->{$core}->{'percent_access_to_'.$dram} = $sum/$sum_all;  
          }
+         $accesses_to_node[$dram] += $sum;
       }
       
       $global_sum_local += $sum;
@@ -55,6 +57,18 @@ sub local_dram_usage {
    }
    
    $info->{results}->{GLOBAL}->{'local access ratio'} = $global_sum_local/$global_sum_all;
+
+   my ($max_access, $most_loaded_node) = (0,0);
+   for my $dram (0..3) {
+      $info->{results}->{GLOBAL}->{'access to '.$dram} = $accesses_to_node[$dram];
+      if($accesses_to_node[$dram] > $max_access) {
+         $max_access = $accesses_to_node[$dram];
+         $most_loaded_node = $dram;
+      }
+   }
+   $info->{results}->{GLOBAL}->{'most loaded node'} = $most_loaded_node;
+   $info->{results}->{GLOBAL}->{'% of accesses to most loaded node'} = $max_access / $global_sum_all;
+
 
    if ( $opt->{gnuplot} ) {
 #      my @plota;
