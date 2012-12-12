@@ -70,7 +70,7 @@ my %parse_options = (
    INSTRUCTIONS => {
       name => 'Instructions',                    
       events => [ 'c0', '76' ],
-      value => 'per_core', #Numbers are relative to previous events. 1 is RETIRED.
+      value => 'per_core_sum', #Numbers are relative to previous events. 1 is RETIRED.
    },
 
 
@@ -218,7 +218,7 @@ my %parse_options = (
    CPU_DRAM => {
       name => 'CPU to DRAM',
       events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
-      value => 'per_core',
+      value => 'per_core_avg',
       legend => 'DRAM of node',
       #gnuplot_range => [ 0, 250 ],
    },
@@ -233,7 +233,7 @@ my %parse_options = (
    CPU_DRAM2 => {
       name => 'CPU to DRAM',
       events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
-      value => 'per_core',
+      value => 'per_core_avg',
       legend => 'DRAM of node',
       #gnuplot_range => [ 0, 250 ],
    },
@@ -464,14 +464,14 @@ my %parse_options = (
    HT_DATA => {
       name => 'HT Links data',
       events => [ 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
-      value => 'per_core',
+      value => 'per_core_avg',
       legend => 'HT link',
    },
    
    LOCK => {
       name => 'Bus locking',
       events => [ 'LOCKED_OPERATIONS' ],
-      value => 'per_core',
+      value => 'per_core_avg',
       legend => 'LOCK',
       
    },   
@@ -575,8 +575,11 @@ sub _do_info {
       case 'ht_link' {
          File::MiniProf::Results::HT::ht_link($self, $info, \%parse_options, \%opt);
       }
-      case 'per_core' {
+      case 'per_core_avg' {
          File::MiniProf::Results::Core::per_core($self, $info, \%parse_options, \%opt);
+      }
+      case 'per_core_sum' {
+         File::MiniProf::Results::Core::per_core_sum($self, $info, \%parse_options, \%opt);
       }
       case 'locality_per_node' {
          File::MiniProf::Results::DRAM::local_dram_usage($self, $info, \%parse_options, \%opt);
