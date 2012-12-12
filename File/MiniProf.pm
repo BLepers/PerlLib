@@ -60,20 +60,6 @@ my %parse_options = (
       events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
-
-   IPC2 => {
-      name => 'IPC',                    
-      events => [ '76', 'c0' ],
-      value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
-   },
-
-   INSTRUCTIONS => {
-      name => 'Instructions',                    
-      events => [ 'c0', '76' ],
-      value => 'per_core_sum', #Numbers are relative to previous events. 1 is RETIRED.
-   },
-
-
    DTLB_MISS_INST => {
       name => 'L1 and L2 DTLB miss per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'DTLB_MISS' ],
@@ -90,7 +76,7 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISSES' ],
       value => 'sum_1/sum_0-global', 
    },
-
+   
    L2_MISS_INST => {
       name => 'L2 misses per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES' ],
@@ -102,17 +88,31 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L1D_MISSES' ],
       value => 'sum_1/sum_0', 
    },
-   L1_MISS_INST2 => {
-      name => 'L1 misses per retired instructions',                    
-      events => [ 'c0', '41' ],
-      value => 'sum_1/sum_0', 
-   },
    
    L3_ACCESS_INST => {
       name => 'L3 ACCESSes per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_ACCESSES' ],
       value => 'sum_1/sum_0-global', 
    },
+   
+   L2_ACCESS_INST => {
+      name => 'L2 ACCESSes per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L1_ACCESS_INST => {
+      name => 'L1 ACCESSes per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L1D_ACCESSES' ],
+      value => 'sum_1/sum_0', 
+   },
+   
+   L2APPI => {
+      name => 'L2 accesses caused by prefetcher attempts per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_PREFETCH' ],
+      value => 'sum_1/sum_0', 
+   },
+   
    
    L2_ACCESS_INST => {
       name => 'L2 ACCESSes per retired instructions',                    
@@ -186,6 +186,12 @@ my %parse_options = (
       events => [ '40', '41' ],
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
+   },
+
+   L2_RATIO => {
+       name => 'L2 Miss Ratio',
+       events => [ 'L2_ACCESSES', 'L2_MISSES' ],
+       value => 'sum_1/sum_0',
    },
 
    L1TLB_MISS_PER_INSTR => { #Counts L1 TLB Miss = (l2 hit + l2 miss) per instruction
@@ -749,34 +755,3 @@ sub miniprof_parse {
          };
          $self->{miniprof}->{analysed}->{$core}->{$self->{miniprof}->{events}->{$evt}->{hwc_value}} = {
             average => $analyse[0],
-            sum => $analyse[1],
-            count => $analyse[2],
-         };
-      }
-   }
-
-   for my $evt (@{$self->{miniprof}->{avail_info}}) {
-      $self->_do_info($evt, %opt);
-   }
-   return $self->{miniprof};
-}
-
-sub _miniprof_get_average_and_sum {
-   my ($array_ref, $index) = @_;
-   return @{$array_ref->{$index.'_analysed'}} if defined $array_ref->{$index.'_analysed'};
-
-   my $sum = 0;
-   my $count = 0;
-   for my $val (@{$array_ref->{$index}->{val}}) {
-      $sum += $val;
-      $count++;
-   }
-   my @ret;
-   if($count != 0) {
-     @ret = ($sum / $count, $sum, $count);
-   } else {
-      @ret = (0, $sum, $count);
-   }
-   $array_ref->{$index.'_analysed'} = \@ret;
-   return @ret;
-}
