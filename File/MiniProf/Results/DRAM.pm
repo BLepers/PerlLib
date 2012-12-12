@@ -38,7 +38,9 @@ sub local_dram_usage {
 
       my ( $avg, $sum, $count ) = File::MiniProf::_miniprof_get_average_and_sum( $self->{miniprof}->{raw}->{$core}, $events[$local_dram] );
       
-      $info->{results}->{$core}->{'local access ratio'} = $sum/$sum_all;
+      if($sum_all > 0) {
+         $info->{results}->{$core}->{'local access ratio'} = $sum/$sum_all;
+      } 
       
       for my $dram (0..3) {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$dram] );
@@ -56,18 +58,26 @@ sub local_dram_usage {
       $global_sum_all += $sum_all;
    }
    
-   $info->{results}->{GLOBAL}->{'local access ratio'} = $global_sum_local/$global_sum_all;
+   if($global_sum_all > 0) {
+      $info->{results}->{GLOBAL}->{'local access ratio'} = $global_sum_local/$global_sum_all;
+   } else {
+      $info->{results}->{GLOBAL}->{'local access ratio'} = 'No sample';
+   }
 
    my ($max_access, $most_loaded_node) = (0,0);
    for my $dram (0..3) {
       $info->{results}->{GLOBAL}->{'access to '.$dram} = $accesses_to_node[$dram];
-      if($accesses_to_node[$dram] > $max_access) {
+      if($accesses_to_node[$dram] && $accesses_to_node[$dram] > $max_access) {
          $max_access = $accesses_to_node[$dram];
          $most_loaded_node = $dram;
       }
    }
    $info->{results}->{GLOBAL}->{'most loaded node'} = $most_loaded_node;
-   $info->{results}->{GLOBAL}->{'% of accesses to most loaded node'} = $max_access / $global_sum_all;
+   if($global_sum_all) {
+      $info->{results}->{GLOBAL}->{'% of accesses to most loaded node'} = $max_access / $global_sum_all;
+   } else {
+      $info->{results}->{GLOBAL}->{'% of accesses to most loaded node'} = 'No sample';
+   }
 
 
    if ( $opt->{gnuplot} ) {

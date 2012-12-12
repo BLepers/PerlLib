@@ -61,6 +61,19 @@ my %parse_options = (
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
 
+   IPC2 => {
+      name => 'IPC',                    
+      events => [ '76', 'c0' ],
+      value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
+   },
+
+   INSTRUCTIONS => {
+      name => 'Instructions',                    
+      events => [ 'c0', '76' ],
+      value => 'per_core', #Numbers are relative to previous events. 1 is RETIRED.
+   },
+
+
    DTLB_MISS_INST => {
       name => 'L1 and L2 DTLB miss per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'DTLB_MISS' ],
@@ -77,7 +90,7 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISSES' ],
       value => 'sum_1/sum_0-global', 
    },
-   
+
    L2_MISS_INST => {
       name => 'L2 misses per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES' ],
@@ -719,7 +732,7 @@ sub miniprof_parse {
       }
    }
 
-   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n" if(scalar(keys %filtered) > 1);
+   print "[WARNING $self] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n" if(scalar(keys %filtered) > 1);
 
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
