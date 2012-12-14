@@ -125,6 +125,7 @@ sub sum_1_div_sum_0_per_core {
    my ($self, $info, $parse_options, $opt) = @_;
    my  $plot;
    my @gnuplot_xy;
+
    if($opt->{gnuplot}) {
       $plot = File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name});
    }

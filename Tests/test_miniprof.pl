@@ -8,9 +8,10 @@ use File::Sar;
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 5;
 
-
 my $file = File::CachedFile::new($ARGV[0]);
 my $result = $file->miniprof_parse(gnuplot=>0);
+#my $result = $file->miniprof_parse(gnuplot=>1);
+#my $result = $file->miniprof_parse(gnuplot=>1, gnuplot_file=>'png');
 #my $result = $file->miniprof_parse(gnuplot=>1,  miniprof_mintime=> 3, miniprof_maxtime => 30);
 #my $result = $file->miniprof_parse(gnuplot=>1, cores => [3]);
 #my $result = $file->miniprof_parse(gnuplot=>1, gnuplot_max_cpu=>4, miniprof_mintime=> 3, miniprof_maxtime=>15);

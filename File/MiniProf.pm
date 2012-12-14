@@ -96,7 +96,7 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES' ],
       value => 'sum_1/sum_0', 
    },
-   
+
    L1_MISS_INST => {
       name => 'L1 misses per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L1D_MISSES' ],
@@ -114,10 +114,10 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_ACCESSES' ],
       value => 'sum_1/sum_0-global', 
    },
-   
+
    L2_ACCESS_INST => {
-      name => 'L2 ACCESSes per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES' ],
+      name => 'L2 accesses per retired instructions',                    
+      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_ALL' ],
       value => 'sum_1/sum_0', 
    },
    
@@ -214,6 +214,13 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
+ 
+   L2_RATIO => {
+      name => 'L2 Miss Ratio',     
+      events => [ 'L2_ACCESSES_ALL', 'L2_MISSES' ],
+      value => 'sum_1/sum_0', 
+      gnuplot_range => [ 0, 1 ],
+   },
    
    HT_LINK => {
       name => 'Usage of HT Links',
@@ -271,7 +278,7 @@ my %parse_options = (
    },
    
    DRAM_READ_PREFETCH_RATIO => {
-      name => 'DRAM read/write ratio',
+      name => 'DRAM read prefetch ratio',
       events => ['MCR_READ', 'MCR_PREFETCH'],
       value => 'sum_1/sum_0',
    },
@@ -287,6 +294,19 @@ my %parse_options = (
       events => [ 'DCR_ALL', 'DCR_MODIFIED' ],
       value => 'sum_1/sum_0',
    },
+
+   DPPI => {
+      name => 'Data prefetcher per instruction',
+      events => [ 'DATA_PREFETCHER_SUCCESS', 'RETIRED_INSTRUCTIONS' ],
+      value => 'sum_1/sum_0',
+   },
+
+   MCPPI => {
+      name => 'DRAM prefetch per instruction',
+      events => ['MCT_PREFETCH', 'RETIRED_INSTRUCTIONS'],
+      value => 'sum_1/sum_0',
+   },
+
 
    ##### Not really processed data
    READ_LATENCY_0 => {
@@ -562,7 +582,6 @@ sub _do_info {
    my ($self, $info, %opt) = @_;
    return if(!defined($parse_options{$info->{name}}->{value}));
 
-
    switch($parse_options{$info->{name}}->{value}) {
       case 'sum_1/sum_0' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
@@ -742,7 +761,7 @@ sub miniprof_parse {
       }
    }
 
-   print "[WARNING $self] Ignoring ".(scalar(keys %filtered))." entries, one or many counters did not run\n" if(scalar(keys %filtered) > 1);
+   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries (file = ".$self->{filename}.")\n" if(scalar(keys %filtered) > 1);
 
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
@@ -765,6 +784,7 @@ sub miniprof_parse {
    for my $evt (@{$self->{miniprof}->{avail_info}}) {
       $self->_do_info($evt, %opt);
    }
+
    return $self->{miniprof};
 }
 
