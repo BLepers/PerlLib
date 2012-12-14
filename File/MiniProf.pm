@@ -88,7 +88,7 @@ my %parse_options = (
    L3_MISS_INST => {
       name => 'L3 misses per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISSES' ],
-      value => 'sum_1/sum_0', 
+      value => 'sum_1/sum_0-global', 
    },
    
    L2_MISS_INST => {
@@ -112,7 +112,7 @@ my %parse_options = (
    L3_ACCESS_INST => {
       name => 'L3 ACCESSes per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L3_ACCESSES' ],
-      value => 'sum_1/sum_0', 
+      value => 'sum_1/sum_0-global', 
    },
    
    L2_ACCESS_INST => {
