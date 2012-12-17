@@ -201,6 +201,12 @@ my %parse_options = (
       value => '(sum_0+sum_1)/sum_2', 
    },
 
+   L2TLB_MISS_PER_INSTR=> {
+      name => 'L2 TLB Miss per instruction',     
+      events => [ 'c0', 'f46' ], 
+      value => 'sum_1/sum_0', 
+   },
+ 
    L2TLB_HIT_RATIO => {
       name => 'L2 TLB Hit Ratio',     
       events => [ 'f45', 'f46' ], #L2 hit / (L2 hit + L2 miss)
