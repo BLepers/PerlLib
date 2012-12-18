@@ -206,22 +206,29 @@ my %parse_options = (
    ### TLB
    ##############################################
 
-   L1TLB_MISS_PER_INSTR => { #Counts L1 TLB Miss = (l2 hit + l2 miss) per instruction
-      name => 'L1 TLB Miss per instruction',     
-      events => [ 'f45', 'f46', 'c0' ],
-      value => '(sum_0+sum_1)/sum_2', 
+   L1TLB_MISS_PER_INSTR => {
+      name => 'L1 TLB Miss per Instruction',     
+      events => [ 'f45', 'f46', 'c0' ], # L2 DTLB hit, L2 DTLB miss, retired instructions
+      value => '(sum_0+sum_1)/sum_2', # (L2 hit + L2 miss) / retired instructions 
+   },
+
+   L1TLB_HIT_RATIO => {
+      name => 'L1 TLB Hit Ratio',     
+      events => [ 'f4d', 'f45', 'f46' ], # L1 DTLB hit, L2 DTLB hit, L2 DTLB miss
+      value => 'sum_0/sum_all', # L1 hit / (L1 hit + L2 hit + L2 miss)
+      gnuplot_range => [ 0, 1 ],
    },
 
    L2TLB_MISS_PER_INSTR=> {
-      name => 'L2 TLB Miss per instruction',     
-      events => [ 'c0', 'f46' ], #L2 hit / (L2 hit + L2 miss)
-      value => 'sum_1/sum_0', 
+      name => 'L2 TLB Miss per Instruction',     
+      events => [ 'c0', 'f46' ], # retired instructions, L2 DTLB hit 
+      value => 'sum_1/sum_0',
    },
  
    L2TLB_HIT_RATIO => {
       name => 'L2 TLB Hit Ratio',     
-      events => [ 'f45', 'f46' ], #L2 hit / (L2 hit + L2 miss)
-      value => 'sum_0/sum_all', 
+      events => [ 'f45', 'f46' ], # L2 DTLB hit, L2 DTLB miss
+      value => 'sum_0/sum_all', # L2 hit / (L2 hit + L2 miss)
       gnuplot_range => [ 0, 1 ],
    },
 
