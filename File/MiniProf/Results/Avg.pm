@@ -103,12 +103,12 @@ sub sum_0_div_sum_all_per_core {
             for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[0]}->{val}}); $i++) {
                my @vals;
                for my $j (0..$nb_events) {
-                  $val[$j] = $self->{miniprof}->{raw}->{$core}->{$events[$j]}->{val}->[$i];
+                  $vals[$j] = $self->{miniprof}->{raw}->{$core}->{$events[$j]}->{val}->[$i];
                }
                my $avg = (sum(@vals))?($vals[0]/(sum(@vals))):0;
                push(@vals, $avg);
             }
-            push(@gnuplot_xy, $self->{miniprof}->{raw}->{$core}->{$event_0}->{time}); #x
+            push(@gnuplot_xy, $self->{miniprof}->{raw}->{$core}->{$events[0]}->{time}); #x
             push(@gnuplot_xy, \@vals); #y
          }
       }
