@@ -85,48 +85,6 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
    },
    
-   L3_MISS_INST => {
-      name => 'L3 misses per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L3_MISSES' ],
-      value => 'sum_1/sum_0-global', 
-   },
-   
-   L2_MISS_INST => {
-      name => 'L2 misses per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES' ],
-      value => 'sum_1/sum_0', 
-   },
-
-   L1_MISS_INST => {
-      name => 'L1 misses per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L1D_MISSES' ],
-      value => 'sum_1/sum_0', 
-   },
-
-   L1_MISS_INST2 => {
-      name => 'L1 misses per retired instructions',                    
-      events => [ 'c0', '41' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L3_ACCESS_INST => {
-      name => 'L3 ACCESSes per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L3_ACCESSES' ],
-      value => 'sum_1/sum_0-global', 
-   },
-
-   L2_ACCESS_INST => {
-      name => 'L2 accesses per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_ALL' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L1_ACCESS_INST => {
-      name => 'L1 ACCESSes per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L1D_ACCESSES' ],
-      value => 'sum_1/sum_0', 
-   },
-   
    L2APPI => {
       name => 'L2 accesses caused by prefetcher attempts per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_PREFETCH' ],
@@ -181,28 +139,73 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'MCR_PREFETCH' ],
       value => 'sum_1/sum_0-global', 
    },
-   
+
+   ##############################################
+   ### Caches
+   ##############################################
+
    L1_RATIO => {
-      name => 'L1 Miss Ratio',     
-      events => [ '40', '41' ],
+      name => 'L1 miss ratio',     
+      events => [ '40', '41' ], # L1 accesses, L1 misses 
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
 
+   L1_MISS_INST => {
+      name => 'L1 misses per retired instruction',                    
+      events => [ 'c0', '41' ], # retired instructions, L1 misses
+      value => 'sum_1/sum_0', 
+   },
+   
+   L1_ACCESS_INST => {
+      name => 'L1 accesses per retired instruction',                    
+      events => [ 'c0', '40' ], # retired instructions, L1 accesses
+      value => 'sum_1/sum_0', 
+   },
+  
    L2_RATIO => {
       name => 'L2 Miss Ratio',
-      events => [ 'ff7d', 'ff7e' ], # L2_ACCESSES, L2_MISSES
+      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1 ],
    },
 
+   L2_MISS_INST => {
+      name => 'L2 misses per retired instructions',                    
+      events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
+      value => 'sum_1/sum_0', 
+   },
+
+   L2_ACCESS_INST => {
+      name => 'L2 accesses per retired instruction',                    
+      events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
+      value => 'sum_1/sum_0', 
+   },
+
    L3_RATIO => {
       name => 'L3 Miss Ratio',     
-      events => [ '40040ffe0', '40040ffe1' ], # L3_ACCESSES, L3_MISSES
+      events => [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
- 
+
+   L3_MISS_INST => {
+      name => 'L3 misses per retired instruction',                    
+      events => [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
+      value => 'sum_1/sum_0-global', 
+   },
+   
+   L3_ACCESS_INST => {
+      name => 'L3 ACCESSes per retired instructions',                    
+      events => [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
+      value => 'sum_1/sum_0-global', 
+   }, 
+
+
+   ##############################################
+   ### TLB
+   ##############################################
+
    L1TLB_MISS_PER_INSTR => { #Counts L1 TLB Miss = (l2 hit + l2 miss) per instruction
       name => 'L1 TLB Miss per instruction',     
       events => [ 'f45', 'f46', 'c0' ],
