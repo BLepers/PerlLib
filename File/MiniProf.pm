@@ -190,11 +190,19 @@ my %parse_options = (
    },
 
    L2_RATIO => {
-       name => 'L2 Miss Ratio',
-       events => [ 'L2_ACCESSES', 'L2_MISSES' ],
-       value => 'sum_1/sum_0',
+      name => 'L2 Miss Ratio',
+      events => [ 'ff7d', 'ff7e' ], # L2_ACCESSES, L2_MISSES
+      value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
+   L3_RATIO => {
+      name => 'L3 Miss Ratio',     
+      events => [ '40040ffe0', '40040ffe1' ], # L3_ACCESSES, L3_MISSES
+      value => 'sum_1/sum_0', 
+      gnuplot_range => [ 0, 1 ],
+   },
+ 
    L1TLB_MISS_PER_INSTR => { #Counts L1 TLB Miss = (l2 hit + l2 miss) per instruction
       name => 'L1 TLB Miss per instruction',     
       events => [ 'f45', 'f46', 'c0' ],
@@ -203,7 +211,7 @@ my %parse_options = (
 
    L2TLB_MISS_PER_INSTR=> {
       name => 'L2 TLB Miss per instruction',     
-      events => [ 'c0', 'f46' ], 
+      events => [ 'c0', 'f46' ], #L2 hit / (L2 hit + L2 miss)
       value => 'sum_1/sum_0', 
    },
  
@@ -213,28 +221,14 @@ my %parse_options = (
       value => 'sum_0/sum_all', 
       gnuplot_range => [ 0, 1 ],
    },
-   
-   L3_RATIO => {
-      name => 'L3 Miss Ratio',     
-      events => [ 'L3_ACCESSES', 'L3_MISSES' ],
-      value => 'sum_1/sum_0', 
-      gnuplot_range => [ 0, 1 ],
-   },
- 
-   L2_RATIO => {
-      name => 'L2 Miss Ratio',     
-      events => [ 'L2_ACCESSES_ALL', 'L2_MISSES' ],
-      value => 'sum_1/sum_0', 
-      gnuplot_range => [ 0, 1 ],
-   },
-   
+
    HT_LINK => {
       name => 'Usage of HT Links',
       events => [ 'HT_LINK\d', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
       value => 'ht_link',
       gnuplot_range => [ 0, 100 ],
    },
-   
+
    CPU_DRAM => {
       name => 'CPU to DRAM',
       events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
