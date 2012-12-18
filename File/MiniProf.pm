@@ -55,15 +55,10 @@ my $default_minimum_percentage_running = 0.1;
 
 my %parse_options = (
    ## Processed measurements
+   
    IPC => {
       name => 'IPC',                    
-      events => [ 'CPU_CLK_UNHALTED', 'RETIRED_INSTRUCTIONS' ],
-      value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
-   },
-
-   IPC2 => {
-      name => 'IPC',                    
-      events => [ '76', 'c0' ],
+      events => [ '76', 'c0' ], # cpu clock unhalted, retired instructions
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
 
@@ -144,26 +139,26 @@ my %parse_options = (
    ### Caches
    ##############################################
 
-   L1_RATIO => {
-      name => 'L1 miss ratio',     
+   L1_Miss_RATIO => {
+      name => 'L1 Miss Ratio',     
       events => [ '40', '41' ], # L1 accesses, L1 misses 
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
 
    L1_MISS_INST => {
-      name => 'L1 misses per retired instruction',                    
+      name => 'L1 Misses per Retired Instruction',                    
       events => [ 'c0', '41' ], # retired instructions, L1 misses
       value => 'sum_1/sum_0', 
    },
    
    L1_ACCESS_INST => {
-      name => 'L1 accesses per retired instruction',                    
+      name => 'L1 Accesses per Retired Instruction',                    
       events => [ 'c0', '40' ], # retired instructions, L1 accesses
       value => 'sum_1/sum_0', 
    },
   
-   L2_RATIO => {
+   L2_MISS_RATIO => {
       name => 'L2 Miss Ratio',
       events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
       value => 'sum_1/sum_0',
@@ -171,18 +166,18 @@ my %parse_options = (
    },
 
    L2_MISS_INST => {
-      name => 'L2 misses per retired instructions',                    
+      name => 'L2 Misses per Retired Instruction',                    
       events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
       value => 'sum_1/sum_0', 
    },
 
    L2_ACCESS_INST => {
-      name => 'L2 accesses per retired instruction',                    
+      name => 'L2 Accesses per Retired Instruction',                    
       events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
       value => 'sum_1/sum_0', 
    },
 
-   L3_RATIO => {
+   L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
       events => [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
       value => 'sum_1/sum_0', 
@@ -190,17 +185,34 @@ my %parse_options = (
    },
 
    L3_MISS_INST => {
-      name => 'L3 misses per retired instruction',                    
+      name => 'L3 Misses per Retired Instruction',                    
       events => [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
       value => 'sum_1/sum_0-global', 
    },
    
    L3_ACCESS_INST => {
-      name => 'L3 ACCESSes per retired instructions',                    
+      name => 'L3 Accesses per Retired Instruction',                    
       events => [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
       value => 'sum_1/sum_0-global', 
    }, 
 
+   ICACHE_MISS_RATIO => {
+       name => 'Instruction Cache Miss Ratio',
+       events => [ '80', '81' ], # instruction cache fetches, instruction cache misses
+       value => 'sum_1/sum_0',
+   },
+
+   ICACHE_MISS_INST => {
+       name => 'Instruction Cache Misses per Retired Instruction',
+       events => [ 'c0', '81' ], # retired instructions, instruction cache misses
+       value => 'sum_1/sum_0',
+   },
+
+   ICACHE_ACCESS_INST => {
+       name => 'Instruction Cache Accesses per Retired Instruction',
+       events => [ 'c0', '80' ], # retired instructions, instruction cache fetches
+       value => 'sum_1/sum_0',
+   },
 
    ##############################################
    ### TLB
