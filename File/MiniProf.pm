@@ -588,6 +588,11 @@ sub _scripted_value_to_event {
    return $info->{usable_events}->{$event_name};
 }
 
+sub _nb_events {
+   my ($self, $info) = @_;
+   return scalar(@{$parse_options{$info->{name}}->{events}});
+}
+
 sub _do_info {
    my ($self, $info, %opt) = @_;
    return if(!defined($parse_options{$info->{name}}->{value}));

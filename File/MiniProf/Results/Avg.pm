@@ -9,6 +9,7 @@ use File::MiniProf::Results::Plot;
 
 package File::MiniProf::Results::Avg;
 use File::MiniProf;
+use List::Util qw(sum);
 
 sub sum_0_sum_1_div_sum_2_per_core {
    my ($self, $info, $parse_options, $opt) = @_;
@@ -76,30 +77,35 @@ sub sum_0_div_sum_all_per_core {
       $plot = File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name});
    }
 
-   my $event_0 = $self->_scripted_value_to_event(0, $info);
-   my $event_1 = $self->_scripted_value_to_event(1, $info);
+   my $nb_events = $self->_nb_events($info) - 1;
+   my @events;
+   my @global_sum;
+   for my $i (0..$nb_events) {
+      $events[$i] = $self->_scripted_value_to_event($i, $info);
+   }
 
-   my $glob_sum_0 = 0;
-   my $glob_sum_1 = 0;
 
    for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
-      my ($avg0, $sum0, $count0) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_0 );
-      my ($avg1, $sum1, $count1) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_1 );
+      my @current_glob_sum;
+      for my $i (0..$nb_events) {
+         my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
+         $global_sum[$i] += $sum;
+         $current_glob_sum[$i] = $sum;
+      }
 
-      $glob_sum_0 += $sum0; 
-      $glob_sum_1 += $sum1; 
-
-      if($sum0 + $sum1 != 0) {
-         $info->{results}->{$core} = $sum0/($sum0+$sum1);
+      if(sum(@current_glob_sum) != 0) {
+         $info->{results}->{$core} = $current_glob_sum[0]/(sum(@current_glob_sum));
       }
 
       if($opt->{gnuplot}) {
          if(!defined($opt->{gnuplot_max_cpu}) || $core < $opt->{gnuplot_max_cpu}) {
             my @vals = ();
-            for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$event_0}->{val}}); $i++) {
-               my $val_0 = $self->{miniprof}->{raw}->{$core}->{$event_0}->{val}->[$i];
-               my $val_1 = $self->{miniprof}->{raw}->{$core}->{$event_1}->{val}->[$i];
-               my $avg = ($val_1)?($val_0/($val_0+$val_1)):0;
+            for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[0]}->{val}}); $i++) {
+               my @vals;
+               for my $j (0..$nb_events) {
+                  $val[$j] = $self->{miniprof}->{raw}->{$core}->{$events[$j]}->{val}->[$i];
+               }
+               my $avg = (sum(@vals))?($vals[0]/(sum(@vals))):0;
                push(@vals, $avg);
             }
             push(@gnuplot_xy, $self->{miniprof}->{raw}->{$core}->{$event_0}->{time}); #x
@@ -108,8 +114,8 @@ sub sum_0_div_sum_all_per_core {
       }
    }
 
-   if($glob_sum_0){
-      $info->{results}->{ALL} = $glob_sum_0 / ($glob_sum_0 + $glob_sum_1);
+   if(sum(@global_sum)){
+      $info->{results}->{ALL} = $global_sum[0] / (sum(@global_sum));
    }
    else {
       $info->{results}->{ALL} = "No samples";
