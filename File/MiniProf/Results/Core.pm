@@ -93,7 +93,7 @@ sub per_core_sum {
                push(@plota, \@vals);
             }
       
-            $plot->gnuplot_set_plot_titles(map($parse_options->{$info->{name}}->{legend}." $_", (0..$tsize)));
+            $plot->gnuplot_set_plot_titles(map(($parse_options->{$info->{name}}->{legend}//'')." $_", (0..$tsize)));
             
             $plot->gnuplot_plot_many( 
                @plota

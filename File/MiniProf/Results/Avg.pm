@@ -179,6 +179,22 @@ sub sum_1_div_sum_0_per_core {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
+
+
+   if($opt->{gnuplot} && $parse_options->{$info->{name}}->{gnuplot_per_core}) {      
+      for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
+         $plot = File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name}." Core".$core);
+         my @vals = ();
+         for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$event_0}->{val}}); $i++) {
+            my $val_0 = $self->{miniprof}->{raw}->{$core}->{$event_0}->{val}->[$i];
+            my $val_1 = $self->{miniprof}->{raw}->{$core}->{$event_1}->{val}->[$i];
+            my $avg = ($val_1 && $val_0)?($val_1/$val_0):0;
+            push(@vals, $avg);
+         }
+         $plot->gnuplot_plot_many( $self->{miniprof}->{raw}->{$core}->{$event_0}->{time}, \@vals );
+      }
+   }
+
 }
 
 sub sum_1_sum_2_div_sum_0_per_core {

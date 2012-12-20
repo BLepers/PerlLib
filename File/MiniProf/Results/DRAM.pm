@@ -99,7 +99,7 @@ sub local_dram_usage {
          push( @plota, \@vals );     
       }
 
-      $plot->gnuplot_set_plot_titles( map( "Die $_", ( 0 .. 3 ) ) );
+      $plot->gnuplot_set_plot_titles( map( "Locality of node $_", ( 0 .. 3 ) ) );
       $plot->gnuplot_plot_xy( $self->{miniprof}->{raw}->{0}->{ $events[0] }->{time}, @plota ); 
    }
 
@@ -120,8 +120,27 @@ sub local_dram_usage {
          push( @plota, \@vals );     
       }
       
-      $plot->gnuplot_set_plot_titles( map( "Die $_", ( 0 .. 3 ) ) );
+      $plot->gnuplot_set_plot_titles( map( "To node $_", ( 0 .. 3 ) ) );
       $plot->gnuplot_plot_xy( $self->{miniprof}->{raw}->{0}->{ $events[0] }->{time}, @plota ); 
+   }
+
+   if($opt->{gnuplot} && $parse_options->{$info->{name}}->{gnuplot_per_core}) {  
+      my $random_core = ( keys %{ $self->{miniprof}->{raw} } )[0];
+      for my $k ( 0 .. 3 ) {
+         my $plot = File::MiniProf::Results::Plot::get_plot( $info, $parse_options, $opt, 'DRAM Accesses to Node'.$k);
+         my @plota;
+         my @vals = ();
+         for ( my $i = 0 ; $i < scalar( @{ $self->{miniprof}->{raw}->{$random_core}->{ $events[0] }->{val} } ) ; $i++ ) {
+            my $val = 0;
+            for my $core ( keys %{ $self->{miniprof}->{raw} } ) {
+               $val += $self->{miniprof}->{raw}->{$core}->{ $events[$k] }->{val}->[$i];                
+            }
+            push( @vals, $val );
+         }
+         push( @plota, \@vals );     
+         $plot->gnuplot_set_plot_titles( map( "To node $_", ( 0 .. 3 ) ) );
+         $plot->gnuplot_plot_xy( $self->{miniprof}->{raw}->{0}->{ $events[0] }->{time}, @plota );
+      }
    }
 }
 

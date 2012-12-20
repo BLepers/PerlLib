@@ -279,6 +279,7 @@ my %parse_options = (
       events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
       value => 'locality_per_node',
       legend => 'Local DRAM of node',
+      gnuplot_per_core => 1,
    },
 
    MAPI => {
@@ -364,6 +365,7 @@ my %parse_options = (
       events => [ '10040ffE3', '10040ffE2' ], #Number of mem accesses monitored, latency of these accesses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1000 ],
+      gnuplot_per_core => 1,
    },
    
    READ_CMD_LATENCY_0 => {
