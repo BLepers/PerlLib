@@ -103,7 +103,13 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_TLB_FILL' ],
       value => 'sum_1/sum_0', 
    },
-   
+ 
+   L2ATLBFPI2 => {
+      name => 'L2 Data accesses caused by tlb fill per retired instructions',                    
+      events => [ 'c0', '47d' ],
+      value => 'sum_1/sum_0', 
+   },
+
    L2MDCFPI => {
       name => 'L2 misses caused by instruction cache fill per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_DC_FILL' ],
@@ -121,7 +127,12 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_TLB_FILL' ],
       value => 'sum_1/sum_0', 
    },
-   
+  
+  L2MTLBFPI2 => {
+      name => 'L2 misses caused by tlb fill per retired instructions',
+      events => [ 'c0', '47e' ],
+      value => 'sum_1/sum_0',
+  },
    
    L2MPPI => {
       name => 'L2 misses caused by prefetcher attempts per retired instructions',                    

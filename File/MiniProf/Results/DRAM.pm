@@ -67,6 +67,7 @@ sub local_dram_usage {
          $most_loaded_node = $dram;
       }
    }
+   $info->{results}->{GLOBAL}->{'number of memory accesses'} = $global_sum_all;
    $info->{results}->{GLOBAL}->{'most loaded node'} = $most_loaded_node;
    if($global_sum_all) {
       $info->{results}->{GLOBAL}->{'% of accesses to most loaded node'} = $max_access / $global_sum_all;
