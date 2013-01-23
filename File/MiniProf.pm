@@ -192,22 +192,42 @@ my %parse_options = (
 
    L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
-      events => [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
+      events => [ '40040f7e0', '40040f7e1' ], # L3 accesses, L3 misses
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
 
    L3_MISS_INST => {
       name => 'L3 Misses per Retired Instruction',                    
-      events => [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
+      events => [ 'c0', '40040f7e1' ], # retired instructions, L3 misses
       value => 'sum_1/sum_0-global', 
    },
    
    L3_ACCESS_INST => {
       name => 'L3 Accesses per Retired Instruction',                    
+      events => [ 'c0', '40040f7e0' ], # retired instructions, L3 accesses
+      value => 'sum_1/sum_0-global', 
+   }, 
+
+   L3_MISS_RATIO_JEREMY => {
+      name => 'L3 Miss Ratio',     
+      events => [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
+      value => 'sum_1/sum_0', 
+      gnuplot_range => [ 0, 1 ],
+   },
+
+   L3_MISS_INST_JEREMY => {
+      name => 'L3 Misses per Retired Instruction',                    
+      events => [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
+      value => 'sum_1/sum_0-global', 
+   },
+   
+   L3_ACCESS_INST_JEREMY  => {
+      name => 'L3 Accesses per Retired Instruction',                    
       events => [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
       value => 'sum_1/sum_0-global', 
    }, 
+
 
    ICACHE_MISS_RATIO => {
        name => 'Instruction Cache Miss Ratio',
