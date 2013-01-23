@@ -16,11 +16,13 @@ sub get_plot {
    $plot->gnuplot_set_ylabel($title);
    
    $plot->gnuplot_set_style( "lines lt 1 lw 1" );      
+   #$plot->gnuplot_set_xrange( 0, 140 ); 
    $plot->gnuplot_set_yrange( @{$parse_options->{$info->{name}}->{gnuplot_range}} ) if ($parse_options->{$info->{name}}->{gnuplot_range});
 
    if($opt->{gnuplot_file}) {
       if($opt->{gnuplot_file} =~ m/png/) {
          $plot->gnuplot_hardcopy( $title.'.'.$opt->{gnuplot_file}, 'png' );
+         #$plot->gnuplot_hardcopy( $title.'.'.$opt->{gnuplot_file}, 'png size 5000,200' );
       } elsif($opt->{gnuplot_file} =~ m/pdf/) {
       } else {
          die "Unknown file extension for gnuplot output (file $opt->{gnuplot_file})";

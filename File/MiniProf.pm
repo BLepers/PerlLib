@@ -5,12 +5,14 @@ use Data::Dumper;
 use Switch;
 use FindBin;
 use lib "$FindBin::Bin";
+use Math::BigInt;
 use File::Utils;
 use File::MiniProf::Results::Avg;
 use File::MiniProf::Results::HT;
 use File::MiniProf::Results::Core;
 use File::MiniProf::Results::DRAM;
 use File::MiniProf::Results::Latency;
+use File::MiniProf::Results::TLB;
 
 package File::MiniProf;
 =head
@@ -521,6 +523,11 @@ my %parse_options = (
       gnuplot => 0,
    },
    
+   TLB_COST => {
+      name => '% of time spent doing TLB Miss',
+      events => ['47e', '10040ffE2', '10040ffE3', '76' ],
+      value => 'tlb_cost',
+   },
 
    ### Useless ?
    HT_DATA => {
@@ -582,9 +589,22 @@ sub _find_something_to_do {
       my %matches = ();
       for my $evt (@{$parse_options{$known_evt}->{events}}) {
          my $match = 0;
+         my $evt_hex = $evt;
+         #For HWC events like '76', we also consider '400076' as a valid match
+         #(The extra 40000 was sometimes added in Miniprof scripts to explicitly start counters)
+         if($evt_hex =~ m/^[0-9a-fA-F]+$/) {
+            $evt_hex = Math::BigInt->new('0x'.$evt_hex);
+            if($evt_hex & 0x400000) {
+               $evt_hex -= 0x400000;
+            } else {
+               $evt_hex += 0x400000;
+            }
+            $evt_hex = "".$evt_hex->as_hex;
+         }
          for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
             if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
-               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)) {
+               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)
+               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt_hex$/i)) {
                $match = 1;
                $matches{$evt} = $avail_evt;
                last;
@@ -652,6 +672,9 @@ sub _do_info {
       }
       case 'latencies' {
          File::MiniProf::Results::Latency::sum($self, $info, \%parse_options, \%opt);
+      }
+      case 'tlb_cost' {
+         File::MiniProf::Results::TLB::cost($self, $info, \%parse_options, \%opt);
       }
       else {
          die $parse_options{$info->{name}}->{value}." function not implemented yet!";
