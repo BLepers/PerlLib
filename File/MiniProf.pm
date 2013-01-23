@@ -600,6 +600,7 @@ sub _find_something_to_do {
                $evt_hex += 0x400000;
             }
             $evt_hex = "".$evt_hex->as_hex;
+            $evt_hex =~ s/^0x//;
          }
          for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
             if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
