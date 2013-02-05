@@ -173,22 +173,42 @@ my %parse_options = (
   
    L2_MISS_RATIO => {
       name => 'L2 Miss Ratio',
-      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
+      events => [ '277d', '0f7e' ], # L2 accesses, L2 misses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1 ],
    },
 
    L2_MISS_INST => {
       name => 'L2 Misses per Retired Instruction',                    
-      events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
+      events => [ 'c0', '0f7e' ], # retired instructions, L2 misses
       value => 'sum_1/sum_0', 
    },
 
    L2_ACCESS_INST => {
       name => 'L2 Accesses per Retired Instruction',                    
+      events => [ 'c0', '277d' ], # retired instructions, L2 accesses
+      value => 'sum_1/sum_0', 
+   },
+
+   L2_MISS_RATIO_JEREMY => {
+      name => 'L2 Miss Ratio',
+      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
+      value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
+   },
+
+   L2_MISS_INST_JEREMY => {
+      name => 'L2 Misses per Retired Instruction',                    
+      events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
+      value => 'sum_1/sum_0', 
+   },
+
+   L2_ACCESS_INST_JEREMY => {
+      name => 'L2 Accesses per Retired Instruction',                    
       events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
       value => 'sum_1/sum_0', 
    },
+
 
    L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
