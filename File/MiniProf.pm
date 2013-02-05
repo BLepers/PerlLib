@@ -277,6 +277,20 @@ my %parse_options = (
       gnuplot_range => [ 0, 1 ],
    },
 
+   #INTEL ONLY!!
+   #Two rules to do the same thing because there are 2 counters to count the same thing!
+   PERCENT_PMH_BUSY => {
+      name => 'Percent of time whent the PMH is busy (Intel)',     
+      events => [ '3c', '408' ], # #cycles-pmh-busy/#cycles 
+      value => 'sum_1/sum_0', 
+   },
+   PERCENT_PMH_BUSY2 => {
+      name => 'Percent of time whent the PMH is busy (Intel)',     
+      events => [ '3c', '449' ], # #cycles-pmh-busy/#cycles
+      value => 'sum_1/sum_0', 
+   },
+
+
    HT_LINK => {
       name => 'Usage of HT Links',
       events => [ 'HT_LINK\d', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
@@ -362,6 +376,7 @@ my %parse_options = (
       events => ['MCT_PREFETCH', 'RETIRED_INSTRUCTIONS'],
       value => 'sum_1/sum_0',
    },
+
 
 
    ##### Not really processed data
