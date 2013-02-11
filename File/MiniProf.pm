@@ -114,13 +114,13 @@ my %parse_options = (
 
    HT_LINK_3_0_LOAD => {
       name => 'HT Link 3.0 load',
-      events => [ '1000001FF9', '10000017F9' ],
+      events => [ '100001FF9', '1000017F9' ],
       value => 'sum_1/sum_0',
    }, 
    
    HT_LINK_3_1_LOAD => {
       name => 'HT Link 3.1 load',
-      events => [ '1000009FF9', '10000097F9' ],
+      events => [ '100009FF9', '1000097F9' ],
       value => 'sum_1/sum_0',
    },
 
