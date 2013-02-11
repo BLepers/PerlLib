@@ -76,6 +76,54 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
    },
 
+   HT_LINK_0_0_LOAD => {
+      name => 'HT Link 0.0 load',
+      events => [ '1FF6', '17F6' ],
+      value => 'sum_1/sum_0',
+   },
+
+   HT_LINK_0_1_LOAD => {
+      name => 'HT Link 0.1 load',
+      events => [ '9FF6', '97F6' ],
+      value => 'sum_1/sum_0',
+   },
+   
+   HT_LINK_1_0_LOAD => {
+      name => 'HT Link 1.0 load',
+      events => [ '1FF7', '17F7' ],
+      value => 'sum_1/sum_0',
+   },
+
+   HT_LINK_1_1_LOAD => {
+      name => 'HT Link 1.1 load',
+      events => [ '9FF7', '97F7' ],
+      value => 'sum_1/sum_0',
+   },
+
+   HT_LINK_2_0_LOAD => {
+      name => 'HT Link 2.0 load',
+      events => [ '1FF8', '17F8' ],
+      value => 'sum_1/sum_0',
+   },
+
+   HT_LINK_2_1_LOAD => {
+      name => 'HT Link 2.1 load',
+      events => [ '9FF8', '97F8' ],
+      value => 'sum_1/sum_0',
+   },
+
+   HT_LINK_3_0_LOAD => {
+      name => 'HT Link 3.0 load',
+      events => [ '100001FF9', '1000017F9' ],
+      value => 'sum_1/sum_0',
+   }, 
+   
+   HT_LINK_3_1_LOAD => {
+      name => 'HT Link 3.1 load',
+      events => [ '100009FF9', '1000097F9' ],
+      value => 'sum_1/sum_0',
+   },
+
    ITLB_MISS_INST => {
       name => 'L1 and L2 ITLB miss per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'ITLB_MISS' ],
@@ -173,22 +221,42 @@ my %parse_options = (
   
    L2_MISS_RATIO => {
       name => 'L2 Miss Ratio',
-      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
+      events => [ '277d', '0f7e' ], # L2 accesses, L2 misses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1 ],
    },
 
    L2_MISS_INST => {
       name => 'L2 Misses per Retired Instruction',                    
-      events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
+      events => [ 'c0', '0f7e' ], # retired instructions, L2 misses
       value => 'sum_1/sum_0', 
    },
 
    L2_ACCESS_INST => {
       name => 'L2 Accesses per Retired Instruction',                    
+      events => [ 'c0', '277d' ], # retired instructions, L2 accesses
+      value => 'sum_1/sum_0', 
+   },
+
+   L2_MISS_RATIO_JEREMY => {
+      name => 'L2 Miss Ratio',
+      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
+      value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
+   },
+
+   L2_MISS_INST_JEREMY => {
+      name => 'L2 Misses per Retired Instruction',                    
+      events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
+      value => 'sum_1/sum_0', 
+   },
+
+   L2_ACCESS_INST_JEREMY => {
+      name => 'L2 Accesses per Retired Instruction',                    
       events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
       value => 'sum_1/sum_0', 
    },
+
 
    L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
@@ -277,6 +345,20 @@ my %parse_options = (
       gnuplot_range => [ 0, 1 ],
    },
 
+   #INTEL ONLY!!
+   #Two rules to do the same thing because there are 2 counters to count the same thing!
+   PERCENT_PMH_BUSY => {
+      name => 'Percent of time whent the PMH is busy (Intel)',     
+      events => [ '3c', '408' ], # #cycles-pmh-busy/#cycles 
+      value => 'sum_1/sum_0', 
+   },
+   PERCENT_PMH_BUSY2 => {
+      name => 'Percent of time whent the PMH is busy (Intel)',     
+      events => [ '3c', '449' ], # #cycles-pmh-busy/#cycles
+      value => 'sum_1/sum_0', 
+   },
+
+
    HT_LINK => {
       name => 'Usage of HT Links',
       events => [ 'HT_LINK\d', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
@@ -362,6 +444,7 @@ my %parse_options = (
       events => ['MCT_PREFETCH', 'RETIRED_INSTRUCTIONS'],
       value => 'sum_1/sum_0',
    },
+
 
 
    ##### Not really processed data
