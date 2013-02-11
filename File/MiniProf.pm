@@ -548,6 +548,12 @@ my %parse_options = (
       events => ['47e', '10040ffE2', '10040ffE3', '76' ],
       value => 'tlb_cost',
    },
+   
+   PROPORTION_L2M_TLB => {
+      name => 'Proportion of L2 misses due to TLB fill',
+      events => ['ff7e', '47e'],
+      value => 'sum_1/sum_0',
+   },
 
    ### Useless ?
    HT_DATA => {
