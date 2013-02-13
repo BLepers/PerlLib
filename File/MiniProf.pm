@@ -66,8 +66,14 @@ my %parse_options = (
 
    INSTRUCTIONS => {
       name => 'Instructions',                    
-      events => [ 'c0', '76' ],
-      value => 'per_core_sum', #Numbers are relative to previous events. 1 is RETIRED.
+      events => [ 'c0' ],
+      value => 'per_core_sum', 
+   },
+
+   CYCLES => {
+      name => 'Cycles',                    
+      events => [ '76' ],
+      value => 'per_core_sum', 
    },
 
    DTLB_MISS_INST => {
@@ -979,4 +985,15 @@ sub _miniprof_get_average_and_sum {
    }
    $array_ref->{$index.'_analysed'} = \@ret;
    return @ret;
+}
+
+sub miniprof_find_info {
+   my ($miniprof_results, $name) = @_;
+   for my $res (@$miniprof_results) {
+      for my $avail_info (@{$res->{avail_info}}) {
+         if($avail_info->{name} eq $name) {
+            return $avail_info->{results};
+         }
+      }
+   }
 }
