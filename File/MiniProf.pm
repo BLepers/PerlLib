@@ -53,8 +53,6 @@ Returns:
    }
 =cut
 
-my $default_minimum_percentage_running = 0.1;
-
 my %parse_options = (
    ## Processed measurements
    
@@ -832,7 +830,8 @@ sub miniprof_parse {
    
    my $first_time;
    my $line_no = 0;
-   my %filtered;
+   my $nsamples = 0;
+   my %filtered = ();
 
    while (my $line = <$self>) {
       $line_no++;
@@ -853,6 +852,8 @@ sub miniprof_parse {
       if(scalar(@content) == 6) {
          my $percentage_running = $content[4];
          $logical_time = $content[5];
+
+         $nsamples = $logical_time if($logical_time > $nsamples);
 
          if(defined $filtered{$logical_time}) {
             next;
@@ -901,31 +902,6 @@ sub miniprof_parse {
          || 
          ((defined $opt{miniprof_maxtime}) && $time > $opt{miniprof_maxtime})){
 
-         if(defined $logical_time) {
-            ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
-            $filtered{$logical_time} = "removed";
-
-            ## Remove values that may have been already added
-            for my $c (keys %{$self->{miniprof}->{raw}}) {
-               for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
-                  if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
-                     my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
-
-                     if($array_lt[$#array_lt] == $logical_time) {
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
-                     }
-                  }
-                  else {
-                     print "BUG !\n";
-                     print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
-                     exit;
-                  }
-               }
-            }
-         }
-
          next;
       }
 
@@ -940,7 +916,13 @@ sub miniprof_parse {
       }
    }
 
-   print "[WARNING] Ignoring ".(scalar(keys %filtered))." entries (file = ".$self->{filename}.")\n" if(scalar(keys %filtered) > 1);
+   if($nsamples && scalar(keys %filtered)/$nsamples > 0.1) {
+      printf "[WARNING] Ignoring %d entries (%.1f %%, file = %s)\n", scalar(keys %filtered), scalar(keys %filtered) * 100./$nsamples, $self->{filename};
+   }
+
+   if(!$nsamples) {
+      printf "[WARNING] No samples found in file %s\n", $self->{filename};
+   }
 
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
