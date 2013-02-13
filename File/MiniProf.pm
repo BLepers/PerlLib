@@ -84,48 +84,56 @@ my %parse_options = (
       name => 'HT Link 0.0 load',
       events => [ '1FF6', '17F6' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    HT_LINK_0_1_LOAD => {
       name => 'HT Link 0.1 load',
       events => [ '9FF6', '97F6' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
    
    HT_LINK_1_0_LOAD => {
       name => 'HT Link 1.0 load',
       events => [ '1FF7', '17F7' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    HT_LINK_1_1_LOAD => {
       name => 'HT Link 1.1 load',
       events => [ '9FF7', '97F7' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    HT_LINK_2_0_LOAD => {
       name => 'HT Link 2.0 load',
       events => [ '1FF8', '17F8' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    HT_LINK_2_1_LOAD => {
       name => 'HT Link 2.1 load',
       events => [ '9FF8', '97F8' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    HT_LINK_3_0_LOAD => {
       name => 'HT Link 3.0 load',
       events => [ '100001FF9', '1000017F9' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    }, 
    
    HT_LINK_3_1_LOAD => {
       name => 'HT Link 3.1 load',
       events => [ '100009FF9', '1000097F9' ],
       value => 'sum_1/sum_0',
+      gnuplot_range => [ 0, 1 ],
    },
 
    ITLB_MISS_INST => {
