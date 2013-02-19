@@ -82,11 +82,11 @@ sub worker {
          my $result = $file->miniprof_parse();
          $result->{raw} = undef;
          $result->{analysed} = undef;
-         push(@{$_results{$basename}}, shared_clone($result));
+         push(@{$_results{$basename}}, $result);
       };
    }
 
-   return shared_clone(\%_results);
+   return \%_results;
 }
 
 for my $core (0..($nb_cores-1)) {
