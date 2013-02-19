@@ -142,68 +142,14 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
    },
    
-   L2APPI => {
-      name => 'L2 accesses caused by prefetcher attempts per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_PREFETCH' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L2ADCFPI => {
-      name => 'L2 accesses caused by instruction cache fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_DC_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L2AICFPI => {
-      name => 'L2 accesses caused by data cache fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_IC_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L2ATLBFPI => {
-      name => 'L2 Data accesses caused by tlb fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_TLB_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
- 
    L2ATLBFPI2 => {
       name => 'L2 Data accesses caused by tlb fill per retired instructions',                    
       events => [ 'c0', '47d' ],
       value => 'sum_1/sum_0', 
    },
 
-   L2MDCFPI => {
-      name => 'L2 misses caused by instruction cache fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_DC_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L2MICFPI => {
-      name => 'L2 misses caused by data cache fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_IC_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
-   
-   L2MTLBFPI => {
-      name => 'L2 misses caused by tlb fill per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_TLB_FILL' ],
-      value => 'sum_1/sum_0', 
-   },
-  
-  L2MTLBFPI2 => {
-      name => 'L2 misses caused by tlb fill per retired instructions',
-      events => [ 'c0', '47e' ],
-      value => 'sum_1/sum_0',
-  },
-   
-   L2MPPI => {
-      name => 'L2 misses caused by prefetcher attempts per retired instructions',                    
-      events => [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_PREFETCH' ],
-      value => 'sum_1/sum_0', 
-   },
-   
    MCTPPI => {
-      name => 'Memory controller attempts per retired instructions',                    
+      name => 'MCT prefetch attempts per retired instructions',                    
       events => [ 'RETIRED_INSTRUCTIONS', 'MCR_PREFETCH' ],
       value => 'sum_1/sum_0-global', 
    },
@@ -212,7 +158,7 @@ my %parse_options = (
    ### Caches
    ##############################################
 
-   L1_Miss_RATIO => {
+   L1_MISS_RATIO => {
       name => 'L1 Miss Ratio',     
       events => [ '40', '41' ], # L1 accesses, L1 misses 
       value => 'sum_1/sum_0', 
@@ -268,7 +214,6 @@ my %parse_options = (
       events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
       value => 'sum_1/sum_0', 
    },
-
 
    L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
@@ -433,12 +378,6 @@ my %parse_options = (
       value => 'sum_1/sum_0',
    },
    
-   LOCKPI => {
-      name => 'Bus locking per instruction',
-      events => [ 'RETIRED_INSTRUCTIONS', 'LOCKED_OPERATIONS' ],
-      value => 'sum_1/sum_0',
-   },
-
    DCMR => {
       name => 'DCMR',
       events => [ 'DCR_ALL', 'DCR_MODIFIED' ],
@@ -456,8 +395,6 @@ my %parse_options = (
       events => ['MCT_PREFETCH', 'RETIRED_INSTRUCTIONS'],
       value => 'sum_1/sum_0',
    },
-
-
 
    ##### Not really processed data
    READ_LATENCY_0 => {
@@ -552,92 +489,6 @@ my %parse_options = (
       gnuplot => 0,
    },
    
-   
-   ### CPU Latencies
-   CPU_LATENCY_0 => {
-      name => 'Latency to node 0',
-      events => [ 'CPU_CMD_NUMBER_N0', 'CPU_CMD_LATENCY_N0' ], #Number of mem accesses monitored, latency of these accesses
-      value => 'sum_1/sum_0',
-      gnuplot_range => [ 0, 1000 ],
-   },
-
-   CPU_LATENCY_1 => {
-      name => 'Latency to node 1',
-      events => [ 'CPU_CMD_NUMBER_N1', 'CPU_CMD_LATENCY_N1' ], #Number of mem accesses monitored, latency of these accesses
-      value => 'sum_1/sum_0',
-      gnuplot_range => [ 0, 1000 ],
-   },
-
-   CPU_LATENCY_2 => {
-      name => 'Latency to node 2',
-      events => [ 'CPU_CMD_NUMBER_N2', 'CPU_CMD_LATENCY_N2' ], #Number of mem accesses monitored, latency of these accesses
-      value => 'sum_1/sum_0',
-      gnuplot_range => [ 0, 1000 ],
-   },
-
-   CPU_LATENCY_3 => {
-      name => 'Latency to node 3',
-      events => [ 'CPU_CMD_NUMBER_N3', 'CPU_CMD_LATENCY_N3' ], #Number of mem accesses monitored, latency of these accesses
-      value => 'sum_1/sum_0',
-      gnuplot_range => [ 0, 1000 ],
-   },
-   
-   CPU_CMD_LATENCY_0 => {
-      name => 'CPU_CMD_LATENCY_0',
-      events => [ 'CPU_CMD_LATENCY_N0' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_LATENCY_1 => {
-      name => 'CPU_CMD_LATENCY_1',
-      events => [ 'CPU_CMD_LATENCY_N1' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_LATENCY_2 => {
-      name => 'CPU_CMD_LATENCY_2',
-      events => [ 'CPU_CMD_LATENCY_N2' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_LATENCY_3 => {
-      name => 'CPU_CMD_LATENCY_3',
-      events => [ 'CPU_CMD_LATENCY_N3' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-  CPU_CMD_REQUESTS_0 => {
-      name => 'CPU_CMD_REQUESTS_0',
-      events => [ 'CPU_CMD_NUMBER_N0' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_REQUESTS_1 => {
-      name => 'CPU_CMD_REQUESTS_1',
-      events => [ 'CPU_CMD_NUMBER_N1' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_REQUESTS_2 => {
-      name => 'CPU_CMD_REQUESTS_2',
-      events => [ 'CPU_CMD_NUMBER_N2' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
-   CPU_CMD_REQUESTS_3 => {
-      name => 'CPU_CMD_REQUESTS_3',
-      events => [ 'CPU_CMD_NUMBER_N3' ],
-      value => 'latencies',
-      gnuplot => 0,
-   },
-   
    TLB_COST => {
       name => '% of time spent doing TLB Miss',
       events => ['47e', '10040ffE2', '10040ffE3', '76' ],
@@ -649,23 +500,6 @@ my %parse_options = (
       events => ['ff7e', '47e'],
       value => 'sum_1/sum_0',
    },
-
-   ### Useless ?
-   HT_DATA => {
-      name => 'HT Links data',
-      events => [ 'HT_LINK0-DATA', 'HT_LINK1-DATA', 'HT_LINK2-DATA' ],
-      value => 'per_core_avg',
-      legend => 'HT link',
-   },
-   
-   LOCK => {
-      name => 'Bus locking',
-      events => [ 'LOCKED_OPERATIONS' ],
-      value => 'per_core_avg',
-      legend => 'LOCK',
-      
-   },   
-   
 );
 
 
@@ -867,36 +701,36 @@ sub miniprof_parse {
             next;
          }
 
-         if($percentage_running > 0) {
-            $value /= $percentage_running;
-         }
-         elsif($percentage_running <= 0) {
-            #print "[WARNING] Ignoring, the counter did not run (file ".$self->{filename}.", line $line_no): $line";
+         if(!defined $opt{skip_multiplexing_fix} || !$opt{skip_multiplexing_fix}) {
+            if($percentage_running > 0) {
+               $value /= $percentage_running;
+            }
+            elsif($percentage_running <= 0) {
+               #print "[WARNING] Ignoring, the counter did not run (file ".$self->{filename}.", line $line_no): $line";
 
-            ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
-            $filtered{$logical_time} = "removed";
+               ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
+               $filtered{$logical_time} = "removed";
 
-            ## Remove values that may have been already added
-            for my $c (keys %{$self->{miniprof}->{raw}}) {
-               for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
-                  if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
-                     my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
+               ## Remove values that may have been already added
+               for my $c (keys %{$self->{miniprof}->{raw}}) {
+                  for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
+                     if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
+                        my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
 
-                     if(($#array_lt >= 0) && ($array_lt[$#array_lt] == $logical_time)) {
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
-                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
+                        if(($#array_lt >= 0) && ($array_lt[$#array_lt] == $logical_time)) {
+                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
+                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
+                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
+                        }
                      }
-                  }
-                  else {
-                     print "BUG !\n";
-                     print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
-                     exit;
+                     else {
+                        print "BUG !\n";
+                        print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
+                        exit;
+                     }
                   }
                }
             }
-            
-            next;
          }
       }
 
