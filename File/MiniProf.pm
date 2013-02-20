@@ -302,6 +302,17 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    }, 
 
+   DRAM_ACCESS_INST => {
+      name => 'DRAM Accesses per Retired Instruction',                    
+      events => [ 'c0', '100403fe0' ], # retired instructions, DRAM accesses
+      value => 'sum_1/sum_0-global', 
+   },
+   
+  MEMORY_CONTROLLER_REQUEST_INST => {
+      name => 'Memory Controller Requests per Retired Instruction',                    
+      events => [ 'c0', '10040fff0' ], # retired instructions, Memory controller requests
+      value => 'sum_1/sum_0-global', 
+   }, 
 
    ICACHE_MISS_RATIO => {
        name => 'Instruction Cache Miss Ratio',
