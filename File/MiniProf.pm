@@ -348,6 +348,18 @@ my %parse_options = (
       value => '(sum_0+sum_1)/sum_2', # (L2 hit + L2 miss) / retired instructions 
    },
 
+   L1TLB_MISS_PER_INSTR_4k => {
+      name => 'L1 TLB Miss per Instruction with 4k pages',     
+      events => [ '145', '146', 'c0' ], # L2 DTLB hit, L2 DTLB miss, retired instructions
+      value => '(sum_0+sum_1)/sum_2', # (L2 hit + L2 miss) / retired instructions 
+   },
+
+  L1TLB_MISS_PER_INSTR_2M => {
+      name => 'L1 TLB Miss per Instruction with 2M pages',     
+      events => [ '245', '246', 'c0' ], # L2 DTLB hit, L2 DTLB miss, retired instructions
+      value => '(sum_0+sum_1)/sum_2', # (L2 hit + L2 miss) / retired instructions 
+   }, 
+  
    L1TLB_HIT_RATIO => {
       name => 'L1 TLB Hit Ratio',     
       events => [ 'f4d', 'f45', 'f46' ], # L1 DTLB hit, L2 DTLB hit, L2 DTLB miss
@@ -358,6 +370,18 @@ my %parse_options = (
    L2TLB_MISS_PER_INSTR=> {
       name => 'L2 TLB Miss per Instruction',     
       events => [ 'c0', 'f46' ], # retired instructions, L2 DTLB hit 
+      value => 'sum_1/sum_0',
+   },
+   
+   L2TLB_MISS_PER_INSTR_4k=> {
+      name => 'L2 TLB Miss per Instruction with 4k pages',     
+      events => [ 'c0', '146' ], # retired instructions, L2 DTLB hit 
+      value => 'sum_1/sum_0',
+   },
+
+   L2TLB_MISS_PER_INSTR_2M=> {
+      name => 'L2 TLB Miss per Instruction with 2M pages',     
+      events => [ 'c0', '246' ], # retired instructions, L2 DTLB hit 
       value => 'sum_1/sum_0',
    },
  
