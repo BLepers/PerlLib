@@ -568,6 +568,12 @@ sub _local_dram_fun {
    }
 }
 
+sub _nb_nodes {
+   my ($self) = @_;
+   return 0 if(!defined $self->{memory_mapping});
+   return scalar(keys %{$self->{memory_mapping}})
+}
+
 sub _find_something_to_do {
    my ($self) = @_;
    if(!defined($self->{miniprof}->{events})) {
