@@ -63,7 +63,7 @@ my %parse_options = (
    },
 
    INSTRUCTIONS => {
-      name => 'Instructions',                    
+      name => 'Instructions', 
       events => [ 'c0' ],
       value => 'per_core_sum', 
    },
@@ -179,37 +179,18 @@ my %parse_options = (
   
    L2_MISS_RATIO => {
       name => 'L2 Miss Ratio',
-      events => [ '277d', '0f7e' ], # L2 accesses, L2 misses
+      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
       value => 'sum_1/sum_0',
       gnuplot_range => [ 0, 1 ],
    },
 
    L2_MISS_INST => {
       name => 'L2 Misses per Retired Instruction',                    
-      events => [ 'c0', '0f7e' ], # retired instructions, L2 misses
-      value => 'sum_1/sum_0', 
-   },
-
-   L2_ACCESS_INST => {
-      name => 'L2 Accesses per Retired Instruction',                    
-      events => [ 'c0', '277d' ], # retired instructions, L2 accesses
-      value => 'sum_1/sum_0', 
-   },
-
-   L2_MISS_RATIO_JEREMY => {
-      name => 'L2 Miss Ratio',
-      events => [ 'ff7d', 'ff7e' ], # L2 accesses, L2 misses
-      value => 'sum_1/sum_0',
-      gnuplot_range => [ 0, 1 ],
-   },
-
-   L2_MISS_INST_JEREMY => {
-      name => 'L2 Misses per Retired Instruction',                    
       events => [ 'c0', 'ff7e' ], # retired instructions, L2 misses
       value => 'sum_1/sum_0', 
    },
 
-   L2_ACCESS_INST_JEREMY => {
+   L2_ACCESS_INST => {
       name => 'L2 Accesses per Retired Instruction',                    
       events => [ 'c0', 'ff7d' ], # retired instructions, L2 accesses
       value => 'sum_1/sum_0', 
@@ -535,6 +516,22 @@ my %parse_options = (
       events => ['ff7e', '47e'],
       value => 'sum_1/sum_0',
    },
+
+
+   ## Software events
+   PAGE_TBL_MINOR_FAULTS => {
+      name => "PAGE_TBL_MINOR_FAULTS",
+      events => ['minor-faults'],
+      value => 'per_core_sum'
+   },
+
+
+   PAGE_TBL_MINOR_FAULTS_PER_INST => {
+      name => "Minor page fault per instructions",
+      events => ['RETIRED_INSTRUCTIONS', 'minor-faults'],
+      value => 'sum_1/sum_0',
+   },
+
 );
 
 

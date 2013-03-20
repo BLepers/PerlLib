@@ -11,7 +11,8 @@ $Data::Dumper::Maxdepth = 3;
 
 my $file = File::CachedFile::new($ARGV[0]);
 
-my $result = $file->nw_parse({gnuplot=>1});
+my $result = $file->nw_parse({gnuplot=>1, gnuplot_file=>'png'});
+#my $result = $file->nw_parse({gnuplot=>1});
 $result->{raw} = undef;
 $result->{analysed} = undef;
 
