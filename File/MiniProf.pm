@@ -443,8 +443,14 @@ my %parse_options = (
 
    READ_LATENCY_GLOB => {
       name => 'Latency',
-      events => [ '10040ffE3', '10040ffE2' ], #Number of mem accesses monitored, latency of these accesses
-      value => 'sum_1/sum_0',
+      events => [ 
+        [ '10040ffE3', '10040ffE2', '!10040ffE5', '!10040ffE4' ], #Number of mem accesses monitored, latency of these accesses
+        [ '10040ffE3', '10040ffE2', '10040ffE5', '10040ffE4'], #for 8 nodes machines...
+      ],
+      value => [
+         'sum_1/sum_0',
+         '(sum_1+sum_3)/(sum_0+sum_2)',
+      ],
       gnuplot_range => [ 0, 1000 ],
       gnuplot_per_core => 1,
    },
@@ -507,7 +513,10 @@ my %parse_options = (
    
    TLB_COST => {
       name => '% of time spent doing TLB Miss',
-      events => ['47e', '10040ffE2', '10040ffE3', '76' ],
+      events => [
+         ['47e', '10040ffE2', '10040ffE3', '76', '!10040ffE4', '!10040ffE5' ],
+         ['47e', '10040ffE2', '10040ffE3', '76', '10040ffE4', '10040ffE5' ],
+      ],
       value => 'tlb_cost',
    },
    
@@ -571,6 +580,62 @@ sub _nb_nodes {
    return scalar(keys %{$self->{memory_mapping}})
 }
 
+sub _find_matching_evt {
+   my ($self, $known_evt, $subevent) = @_;
+
+   my $fail = 0;
+   my %matches = ();
+
+   my $event_array;
+   if(defined $subevent) {
+      $event_array = $parse_options{$known_evt}->{events}->[$subevent];
+   } else {
+      $event_array = $parse_options{$known_evt}->{events};
+   }
+
+   for my $ev (@{$event_array}) {
+      my $match = 0;
+
+      my $evt = $ev;
+      $evt =~ s/^!//;
+
+      my $evt_hex = $evt;
+      #For HWC events like '76', we also consider '400076' as a valid match
+      #(The extra 40000 was sometimes added in Miniprof scripts to explicitly start counters)
+      if($evt_hex =~ m/^[0-9a-fA-F]+$/) {
+         $evt_hex = Math::BigInt->new('0x'.$evt_hex);
+         if($evt_hex & 0x400000) {
+            $evt_hex -= 0x400000;
+         } else {
+            $evt_hex += 0x400000;
+         }
+         $evt_hex = "".$evt_hex->as_hex;
+         $evt_hex =~ s/^0x//;
+      }
+      for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
+         if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
+            || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)
+            || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt_hex$/i)) {
+            $match = 1;
+            $matches{$evt} = $avail_evt;
+         }
+      }
+
+      my $fail_on_match = ($ev =~ m/^!/);
+      if(($match && $fail_on_match) || (!$match && !$fail_on_match)) {
+         $fail = 1;
+         last;
+      }
+   }
+   if(!$fail) {
+      push(@{$self->{miniprof}->{avail_info}}, {
+            name => $known_evt,
+            subevent => $subevent,
+            usable_events => \%matches,
+      });
+   }
+}
+
 sub _find_something_to_do {
    my ($self) = @_;
    if(!defined($self->{miniprof}->{events})) {
@@ -578,42 +643,13 @@ sub _find_something_to_do {
    }
 
    for my $known_evt (keys %parse_options) {
-      my $fail = 0;
-      my %matches = ();
-      for my $evt (@{$parse_options{$known_evt}->{events}}) {
-         my $match = 0;
-         my $evt_hex = $evt;
-         #For HWC events like '76', we also consider '400076' as a valid match
-         #(The extra 40000 was sometimes added in Miniprof scripts to explicitly start counters)
-         if($evt_hex =~ m/^[0-9a-fA-F]+$/) {
-            $evt_hex = Math::BigInt->new('0x'.$evt_hex);
-            if($evt_hex & 0x400000) {
-               $evt_hex -= 0x400000;
-            } else {
-               $evt_hex += 0x400000;
-            }
-            $evt_hex = "".$evt_hex->as_hex;
-            $evt_hex =~ s/^0x//;
+      if(ref($parse_options{$known_evt}->{events}->[0]) eq 'ARRAY') {
+         my $nb_subevents = scalar(@{$parse_options{$known_evt}->{events}});
+         for (my $subevent = 0; $subevent < $nb_subevents; $subevent++) {
+            $self->_find_matching_evt($known_evt, $subevent);
          }
-         for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
-            if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
-               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)
-               || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt_hex$/i)) {
-               $match = 1;
-               $matches{$evt} = $avail_evt;
-               last;
-            }
-         }
-         if(!$match) {
-            $fail = 1;
-            last;
-         }
-      }
-      if(!$fail) {
-         push(@{$self->{miniprof}->{avail_info}}, {
-               name => $known_evt,
-               usable_events => \%matches,
-            });
+      } else {
+         $self->_find_matching_evt($known_evt);
       }
    }
    if(!defined($self->{miniprof}->{avail_info})) {
@@ -623,20 +659,35 @@ sub _find_something_to_do {
 
 sub _scripted_value_to_event {
    my ($self, $scripted_val, $info) = @_;
-   my $event_name = $parse_options{$info->{name}}->{events}->[$scripted_val];
+   my $event_name;
+   if(!defined $info->{subevent}) {
+      $event_name = $parse_options{$info->{name}}->{events}->[$scripted_val];
+   } else {
+      $event_name = $parse_options{$info->{name}}->{events}->[$info->{subevent}]->[$scripted_val];
+   }
    return $info->{usable_events}->{$event_name};
 }
 
 sub _nb_events {
    my ($self, $info) = @_;
-   return scalar(@{$parse_options{$info->{name}}->{events}});
+   if(!defined $info->{subevent}) {
+      return scalar(@{$parse_options{$info->{name}}->{events}});
+   } else {
+      return scalar(@{$parse_options{$info->{name}}->{events}->[$info->{subevent}]});
+   }
 }
 
 sub _do_info {
    my ($self, $info, %opt) = @_;
    return if(!defined($parse_options{$info->{name}}->{value}));
 
-   switch($parse_options{$info->{name}}->{value}) {
+   my $fun = $parse_options{$info->{name}}->{value};
+   if(ref($fun) eq 'ARRAY') {
+      die 'Value field of event is an array; expected a string' if(!defined $info->{subevent});
+      $fun = $fun->[$info->{subevent}];
+   }
+
+   switch($fun) {
       case 'sum_1/sum_0' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
       }
@@ -651,6 +702,9 @@ sub _do_info {
       }
       case '(sum_1-sum_2)/sum_0' {
          File::MiniProf::Results::Avg::sum_1_sum_2_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
+      }
+      case '(sum_1+sum_3)/(sum_0+sum_2)' {
+         File::MiniProf::Results::Avg::sum_1_sum_3_div_sum_0_sum_2_per_core($self, $info, \%parse_options, \%opt);
       }
       case 'ht_link' {
          File::MiniProf::Results::HT::ht_link($self, $info, \%parse_options, \%opt);
