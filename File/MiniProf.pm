@@ -198,39 +198,29 @@ my %parse_options = (
 
    L3_MISS_RATIO => {
       name => 'L3 Miss Ratio',     
-      events => [ '40040f7e0', '40040f7e1' ], # L3 accesses, L3 misses
+      events => [
+         [ '40040f7e0', '40040f7e1' ], # L3 accesses, L3 misses
+         [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
+      ],
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
 
    L3_MISS_INST => {
       name => 'L3 Misses per Retired Instruction',                    
-      events => [ 'c0', '40040f7e1' ], # retired instructions, L3 misses
+      events => [
+         [ 'c0', '40040f7e1' ], # retired instructions, L3 misses
+         [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
+      ],
       value => 'sum_1/sum_0-global', 
    },
    
    L3_ACCESS_INST => {
       name => 'L3 Accesses per Retired Instruction',                    
-      events => [ 'c0', '40040f7e0' ], # retired instructions, L3 accesses
-      value => 'sum_1/sum_0-global', 
-   }, 
-
-   L3_MISS_RATIO_JEREMY => {
-      name => 'L3 Miss Ratio',     
-      events => [ '40040ffe0', '40040ffe1' ], # L3 accesses, L3 misses
-      value => 'sum_1/sum_0', 
-      gnuplot_range => [ 0, 1 ],
-   },
-
-   L3_MISS_INST_JEREMY => {
-      name => 'L3 Misses per Retired Instruction',                    
-      events => [ 'c0', '40040ffe1' ], # retired instructions, L3 misses
-      value => 'sum_1/sum_0-global', 
-   },
-   
-   L3_ACCESS_INST_JEREMY  => {
-      name => 'L3 Accesses per Retired Instruction',                    
-      events => [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
+      events => [
+         [ 'c0', '40040f7e0' ], # retired instructions, L3 accesses
+         [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
+      ],
       value => 'sum_1/sum_0-global', 
    }, 
 
@@ -341,7 +331,10 @@ my %parse_options = (
 
    CPU_DRAM => {
       name => 'CPU to DRAM',
-      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+      events => [
+         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
+      ],
       value => 'per_core_avg',
       legend => 'DRAM of node',
       #gnuplot_range => [ 0, 250 ],
@@ -349,25 +342,12 @@ my %parse_options = (
 
    LOCAL_DRAM_RATIO => {
       name => 'CPU to DRAM locality',
-      events => [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+      events => [
+         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
+      ],
       value => 'locality_per_node',
       legend => 'Local DRAM of node',
-   },
-
-   CPU_DRAM2 => {
-      name => 'CPU to DRAM',
-      events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
-      value => 'per_core_avg',
-      legend => 'DRAM of node',
-      #gnuplot_range => [ 0, 250 ],
-   },
-
-   LOCAL_DRAM_RATIO2 => {
-      name => 'CPU to DRAM locality',
-      events => [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
-      value => 'locality_per_node',
-      legend => 'Local DRAM of node',
-      gnuplot_per_core => 1,
    },
 
    MAPI => {
