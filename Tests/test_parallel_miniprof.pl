@@ -5,7 +5,7 @@ use FindBin;
 use lib "$FindBin::Bin/../PerlLib";
 use Format;
 use File::Utils;
-use File::Sar;
+use File::MiniProf qw(miniprof_merge);
 use Data::Dumper;
 use threads;
 use threads::shared;
@@ -31,6 +31,7 @@ $file_to_basename:
 
 my $quiet = 0;
 my $nb_cores = `grep "^processor"  /proc/cpuinfo | wc -l`;
+my $merge_miniprof_files_with_common_basename = 1;
 my $file_to_basename = sub {
    my $res = $_[0];
    $res =~ s/\.[^\.]+$//;
@@ -42,14 +43,14 @@ my %events = (
     '2-L1TLB_MISS_PER_INSTR' => sub { return $_[0] ? $_[0]->{ALL} : undef },
     '3-L2TLB_MISS_PER_INSTR' => sub { return $_[0] ? $_[0]->{ALL} : undef },
     '4-L1_MISS_INST' => sub { return $_[0] ? $_[0]->{ALL} : undef },
-    '5-L2_MISS_INST_JEREMY' => sub { return $_[0] ? $_[0]->{ALL} : undef },
-    '6-L3_MISS_INST_JEREMY' => sub { return $_[0] ? $_[0]->{ALL} : undef }, 
+    '5-L2_MISS_INST' => sub { return $_[0] ? $_[0]->{ALL} : undef },
+    '6-L3_MISS_INST' => sub { return $_[0] ? $_[0]->{ALL} : undef }, 
     '7-IPC' => sub { return $_[0] ? $_[0]->{ALL} : undef },
     '8-INSTRUCTIONS' => sub { return $_[0] ? $_[0]->{GLOBAL}->{Instructions0} : undef },
     '9-CYCLES' => sub { return $_[0] ? $_[0]->{GLOBAL}->{Cycles0} : undef },
-    '10-LOCAL_DRAM_RATIO2-#MemAccess' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'number of memory accesses'} : undef },
-    '11-LOCAL_DRAM_RATIO2-LAR' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'local access ratio'} : undef },
-    '12-LOCAL_DRAM_RATIO2-%ToMostLoaded' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'% of accesses to most loaded node'} : undef },
+    '10-LOCAL_DRAM_RATIO-#MemAccess' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'number of memory accesses'} : undef },
+    '11-LOCAL_DRAM_RATIO-LAR' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'local access ratio'} : undef },
+    '12-LOCAL_DRAM_RATIO-%ToMostLoaded' => sub { return $_[0] ? $_[0]->{GLOBAL}->{'% of accesses to most loaded node'} : undef },
 );
 
 
@@ -60,24 +61,39 @@ my @threads;
 @files = @ARGV;
 chomp($nb_cores);
 
+my %file_groups : shared = ();
+for my $f (@files) {
+   my $basename = $f; 
+   $basename = $file_to_basename->($f) if($merge_miniprof_files_with_common_basename);
+
+   my @gfiles : shared = ();
+   $file_groups{$basename} //= \@gfiles;
+
+   push(@{$file_groups{$basename}}, $f);
+}
+
+
 print "#Parsing with $nb_cores cores\n" if(!$quiet);
 
 sub worker {
    my %_results;
 
    while(1) {
-      my $f = undef;
+      my $group = undef;
+      my $files = undef;
       {
-         lock(@files);
-         if($#files >= 0) {
-            $f = shift(@files);
+         lock(%file_groups);
+         for my $g (keys %file_groups) {
+            $group = $g;
+            $files = $file_groups{$group};
+            delete $file_groups{$group};
+            last;
          }
-         print "$#files files remaining\n" if(!$quiet);
       }
-      last if(!defined $f);
+      last if(!defined $files);
 
-      my $basename = $file_to_basename->($f);
-      my $file = File::CachedFile::new($f);
+      my $basename = $file_to_basename->($files->[0]);
+      my $file = miniprof_merge($files);
       eval {
          my $result = $file->miniprof_parse();
          $result->{raw} = undef;
