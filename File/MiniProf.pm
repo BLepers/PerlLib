@@ -15,6 +15,9 @@ use File::MiniProf::Results::Latency;
 use File::MiniProf::Results::TLB;
 
 package File::MiniProf;
+use Exporter 'import'; 
+our @EXPORT_OK = qw(miniprof_merge);
+
 =head
 TODO: Add miniprof_min/max_time + need to parse the cpu frequency (1st line) to convert rdt in seconds.
 
@@ -343,8 +346,9 @@ my %parse_options = (
    LOCAL_DRAM_RATIO => {
       name => 'CPU to DRAM locality',
       events => [
-         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
-         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
+         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3', '!CPU_DRAM_NODE4' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
       ],
       value => 'locality_per_node',
       legend => 'Local DRAM of node',
@@ -710,8 +714,10 @@ sub _do_info {
    }
 }
 
-sub miniprof_parse {
+sub _miniprof_parse_text {
    my ($self, %opt) = @_;
+   return if (defined $self->{miniprof}->{_already_parsed});
+
    my $freq;
    while (my $line = <$self>) {
       #print $line;
@@ -740,7 +746,6 @@ sub miniprof_parse {
       next if($line =~ m/^signal/);
    }
 
-   $self->_find_something_to_do;
    
    my $first_time;
    my $line_no = 0;
@@ -837,6 +842,12 @@ sub miniprof_parse {
    if(!$nsamples) {
       printf "[WARNING] No samples found in file %s\n", $self->{filename};
    }
+   $self->{miniprof}->{_already_parsed} = 1;
+}
+
+sub _preanalyse_events {
+   my ($self) = @_;
+   return if(defined $self->{miniprof}->{_already_analysed});
 
    for my $evt (keys %{$self->{miniprof}->{events}}) {
       for my $core (keys %{$self->{miniprof}->{raw}}) {
@@ -855,7 +866,16 @@ sub miniprof_parse {
          };
       }
    }
+   $self->{miniprof}->{_already_analysed} = 1;
+}
 
+sub miniprof_parse {
+   my ($self, %opt) = @_;
+
+   $self->_miniprof_parse_text(%opt);
+   $self->_preanalyse_events;
+
+   $self->_find_something_to_do;
    for my $evt (@{$self->{miniprof}->{avail_info}}) {
       $self->_do_info($evt, %opt);
    }
@@ -892,4 +912,65 @@ sub miniprof_find_info {
          }
       }
    }
+}
+
+sub miniprof_merge {
+   my ($files, %opt) = @_;
+
+   my $miniprof_files;
+   for my $f (@$files) {
+      if(ref(\$f) eq 'SCALAR') {
+         push(@$miniprof_files, File::CachedFile::new($f));
+      } else {
+         push(@$miniprof_files, $f);
+      }
+   }
+   for my $f (@$miniprof_files) {
+      $f->_miniprof_parse_text(%opt);
+   }
+
+   my $first_file = $miniprof_files->[0];
+   my $file = File::CachedFile::new('virtual');
+   $file->{miniprof}->{_already_parsed} = 1;
+   $file->{miniprof}->{freq} = $first_file->{miniprof}->{freq};
+   $file->{memory_mapping} = $first_file->{memory_mapping};
+
+   my %final_events;
+   my $max_samples = 0;
+   my $events_count = 0;
+
+   for my $f (@$miniprof_files) {
+      for my $ev (keys %{$f->{miniprof}->{events}}) {
+         $file->{miniprof}->{events}->{$events_count} = $f->{miniprof}->{events}->{$ev};
+         $final_events{"$f"}->{$ev} = $events_count;
+         $events_count++;
+      }
+      for my $core (keys %{$f->{miniprof}->{raw}}) {
+         for my $fev (keys %{$f->{miniprof}->{raw}->{$core}}) {
+            my $count = scalar(@{$f->{miniprof}->{raw}->{$core}->{$fev}->{val}});
+            $max_samples = $count if($max_samples < $count);
+         }
+      }
+   }
+
+   for my $f (@$miniprof_files) {
+      for my $core (keys %{$f->{miniprof}->{raw}}) {
+         for my $fev (keys %{$f->{miniprof}->{raw}->{$core}}) {
+            last if(!defined $f->{miniprof}->{raw}->{$core}->{$fev});
+
+            my $final_ev = $final_events{"$f"}->{$fev};
+            for (my $i = 0; $i < $max_samples; $i++) {
+               push(@{$file->{miniprof}->{raw}->{$core}->{$final_ev}->{val}}, 
+                  $f->{miniprof}->{raw}->{$core}->{$fev}->{val}->[$i] // 0);
+               push(@{$file->{miniprof}->{raw}->{$core}->{$final_ev}->{time}}, 
+                  $f->{miniprof}->{raw}->{$core}->{$fev}->{time}->[$i] // 0);
+               push(@{$file->{miniprof}->{raw}->{$core}->{$final_ev}->{logical_time}}, $i);
+            }
+         }
+      }
+   }
+
+   $file->_preanalyse_events;
+
+   return $file;
 }
