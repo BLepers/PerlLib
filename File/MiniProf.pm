@@ -311,6 +311,24 @@ my %parse_options = (
       gnuplot_range => [ 0, 1 ],
    },
 
+   L2ATLBFPI => {
+      name => 'L2 Data accesses caused by tlb fill per retired instructions',                    
+      events => [
+         [ 'RETIRED_INSTRUCTIONS', 'L2_ACCESSES_TLB_FILL' ],
+         [ 'c0', '47d' ],
+      ],
+      value => 'sum_1/sum_0', 
+   },
+ 
+   L2MTLBFPI => {
+      name => 'L2 misses caused by tlb fill per retired instructions',                    
+      events => [
+         [ 'RETIRED_INSTRUCTIONS', 'L2_MISSES_TLB_FILL' ],
+         [ 'c0', '47e' ],
+      ],
+      value => 'sum_1/sum_0', 
+   },
+  
    #INTEL ONLY!!
    #Two rules to do the same thing because there are 2 counters to count the same thing!
    PERCENT_PMH_BUSY => {
