@@ -16,10 +16,9 @@ sub per_core {
    my ($self, $info, $parse_options, $opt) = @_;
    my  $plot;
 
-
-   my $tsize = scalar(@{$parse_options->{$info->{name}}->{events}})-1;
-
+   my $tsize = scalar(keys $info->{usable_events})-1;
    my @events = map { $self->_scripted_value_to_event($_, $info) } (0..$tsize);
+
    for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
       my $to_plot = 0;
       for my $i (0..$tsize) {

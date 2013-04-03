@@ -353,6 +353,7 @@ my %parse_options = (
    CPU_DRAM => {
       name => 'CPU to DRAM',
       events => [
+         ## 4 nodes
          [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
       ],
@@ -641,6 +642,8 @@ sub _find_matching_evt {
             usable_events => \%matches,
       });
    }
+
+   return $fail;
 }
 
 sub _find_something_to_do {
@@ -653,7 +656,7 @@ sub _find_something_to_do {
       if(ref($parse_options{$known_evt}->{events}->[0]) eq 'ARRAY') {
          my $nb_subevents = scalar(@{$parse_options{$known_evt}->{events}});
          for (my $subevent = 0; $subevent < $nb_subevents; $subevent++) {
-            $self->_find_matching_evt($known_evt, $subevent);
+            last if(! $self->_find_matching_evt($known_evt, $subevent));
          }
       } else {
          $self->_find_matching_evt($known_evt);
@@ -667,6 +670,7 @@ sub _find_something_to_do {
 sub _scripted_value_to_event {
    my ($self, $scripted_val, $info) = @_;
    my $event_name;
+
    if(!defined $info->{subevent}) {
       $event_name = $parse_options{$info->{name}}->{events}->[$scripted_val];
    } else {
