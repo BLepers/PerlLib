@@ -556,8 +556,8 @@ sub _local_dram_fun {
    my ($self, $core, $local_dram_fun) = @_;
    
    
-   if(defined $self->{memory_mapping}) {
-      my %mapping = %{$self->{memory_mapping}};
+   if(defined $self->{miniprof}->{memory_mapping}) {
+      my %mapping = %{$self->{miniprof}->{memory_mapping}};
       my $local_dram = -1;
       for my $d (keys %mapping) {
          for my $c (@{$mapping{$d}}) {
@@ -584,8 +584,8 @@ sub _local_dram_fun {
 
 sub _nb_nodes {
    my ($self) = @_;
-   return 0 if(!defined $self->{memory_mapping});
-   return scalar(keys %{$self->{memory_mapping}})
+   return 0 if(!defined $self->{miniprof}->{memory_mapping});
+   return scalar(keys %{$self->{miniprof}->{memory_mapping}})
 }
 
 sub _find_matching_evt {
@@ -764,7 +764,7 @@ sub _miniprof_parse_text {
             #print "Find core $1 for node $node\n";
             push @cores, int($1);
          }
-         $self->{memory_mapping}->{$node} = \@cores;
+         $self->{miniprof}->{memory_mapping}->{$node} = \@cores;
          $freq = $1;
       }
 
@@ -775,6 +775,7 @@ sub _miniprof_parse_text {
 
    
    my $first_time;
+   my $last_time;
    my $line_no = 0;
    my $nsamples = 0;
    my %filtered = ();
@@ -839,6 +840,7 @@ sub _miniprof_parse_text {
       }
 
       $first_time //= $time;
+      $last_time = $time;
       $time = ($time-$first_time)/$freq;
 
       #TODO: ignore time below a defined threshold
@@ -862,6 +864,7 @@ sub _miniprof_parse_text {
       }
    }
 
+
    if($nsamples && scalar(keys %filtered)/$nsamples > 0.1) {
       printf "[WARNING] Ignoring %d entries (%.1f %%, file = %s)\n", scalar(keys %filtered), scalar(keys %filtered) * 100./$nsamples, $self->{filename};
    }
@@ -869,6 +872,8 @@ sub _miniprof_parse_text {
    if(!$nsamples) {
       printf "[WARNING] No samples found in file %s\n", $self->{filename};
    }
+
+   $self->{miniprof}->{rdt_duration} = $last_time - $first_time if($last_time && $first_time);
    $self->{miniprof}->{_already_parsed} = 1;
 }
 
@@ -960,7 +965,8 @@ sub miniprof_merge {
    my $file = File::CachedFile::new('virtual');
    $file->{miniprof}->{_already_parsed} = 1;
    $file->{miniprof}->{freq} = $first_file->{miniprof}->{freq};
-   $file->{memory_mapping} = $first_file->{memory_mapping};
+   $file->{miniprof}->{rdt_duration} = $first_file->{miniprof}->{rdt_duration};
+   $file->{miniprof}->{memory_mapping} = $first_file->{miniprof}->{memory_mapping};
 
    my %final_events;
    my $max_samples = 0;
