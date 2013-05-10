@@ -25,8 +25,8 @@ sub per_core {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
          
          if($avg > 0){
-            $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.$i} = $avg;
-            $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.$i} += $avg; #Not sure it makes sense...
+            $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.",$i"} = $avg;
+            $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.",$i"} += $avg; #Not sure it makes sense...
             $to_plot = 1;
          }
       }
@@ -71,8 +71,8 @@ sub per_core_sum {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
          
          if($sum > 0){
-            $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.$i} = $sum;
-            $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.$i} += $sum;
+            $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.",$i"} = $sum;
+            $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.",$i"} += $sum;
             $to_plot = 1;
          }
       }

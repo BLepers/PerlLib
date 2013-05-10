@@ -383,6 +383,12 @@ my %parse_options = (
       events => [ 'RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL' ],
       value => 'sum_1/sum_0-global',
    },
+
+   MAPI2 => {
+      name => 'DRAM read/write ratio',
+      events => ['RETIRED_INSTRUCTIONS', 'MCR_READ_WRITE'],
+      value => 'sum_1/sum_0-global',
+   },
    
    DRAM_RW_RATIO => {
       name => 'DRAM read/write ratio',
@@ -906,6 +912,19 @@ sub miniprof_parse {
 
    $self->_miniprof_parse_text(%opt);
    $self->_preanalyse_events;
+
+   #print main::Dumper($self->{miniprof}->{events});
+   for my $e (keys %{$self->{miniprof}->{events}}) {
+      if(defined $self->{miniprof}->{events}->{$e}->{name}) {
+         my $ev_name = "$self->{miniprof}->{events}->{$e}->{name}";
+         $parse_options{$ev_name}->{name} = $ev_name;
+         $parse_options{$ev_name}->{events} = [$self->{miniprof}->{events}->{$e}->{hwc_value}];
+         $parse_options{$ev_name}->{value} = 'per_core_sum';
+      }
+      else {
+         print "Event $self->{miniprof}->{events}->{$e}->{hwc_value} not recognized\n";
+      }
+   }
 
    $self->_find_something_to_do;
    for my $evt (@{$self->{miniprof}->{avail_info}}) {
