@@ -70,9 +70,12 @@ sub per_core_sum {
       for my $i (0..$tsize) {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
          
+         my $local_dram = File::MiniProf::_local_dram_fun($self, $core, $opt->{local_dram_fun});
+         
          if($sum > 0){
             $info->{results}->{$core}->{$parse_options->{$info->{name}}->{name}.",$i"} = $sum;
             $info->{results}->{GLOBAL}->{$parse_options->{$info->{name}}->{name}.",$i"} += $sum;
+            $info->{results}->{"NODE$local_dram"}->{$parse_options->{$info->{name}}->{name}.",$i"} += $sum;
             $to_plot = 1;
          }
       }
