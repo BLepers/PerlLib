@@ -805,44 +805,50 @@ sub _miniprof_parse_text {
       }
 
       my $logical_time;
+      my $percentage_running;
 
       if(scalar(@content) == 6) {
-         my $percentage_running = $content[4];
+         $percentage_running = $content[4];
          $logical_time = $content[5];
-
          $nsamples = $logical_time if($logical_time > $nsamples);
+      }
+      elsif (scalar(@content) == 4) { ## Old miniprof format
+         $percentage_running = 1;
+         $logical_time = -1;
+         $nsamples = 1;
+      }
 
-         if(defined $filtered{$logical_time}) {
-            next;
+
+      if(defined $filtered{$logical_time}) {
+         next;
+      }
+
+      if($logical_time >= 0 && (!defined $opt{skip_multiplexing_fix} || !$opt{skip_multiplexing_fix})) {
+         if($percentage_running > 0) {
+            $value /= $percentage_running;
          }
+         elsif($percentage_running <= 0) {
+            #print "[WARNING] Ignoring, the counter did not run (file ".$self->{filename}.", line $line_no): $line";
 
-         if(!defined $opt{skip_multiplexing_fix} || !$opt{skip_multiplexing_fix}) {
-            if($percentage_running > 0) {
-               $value /= $percentage_running;
-            }
-            elsif($percentage_running <= 0) {
-               #print "[WARNING] Ignoring, the counter did not run (file ".$self->{filename}.", line $line_no): $line";
+            ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
+            $filtered{$logical_time} = "removed";
 
-               ## Prevent future value to be added -- For all events (because when they are scheduled together that's for a reason usually)
-               $filtered{$logical_time} = "removed";
+            ## Remove values that may have been already added
+            for my $c (keys %{$self->{miniprof}->{raw}}) {
+               for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
+                  if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
+                     my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
 
-               ## Remove values that may have been already added
-               for my $c (keys %{$self->{miniprof}->{raw}}) {
-                  for my $e (keys %{$self->{miniprof}->{raw}->{$c}}) {
-                     if (defined $self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}) {
-                        my @array_lt = @{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}};
-
-                        if(($#array_lt >= 0) && ($array_lt[$#array_lt] == $logical_time)) {
-                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
-                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
-                           pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
-                        }
+                     if(($#array_lt >= 0) && ($array_lt[$#array_lt] == $logical_time)) {
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{val}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{time}});
+                        pop(@{$self->{miniprof}->{raw}->{$c}->{$e}->{logical_time}});
                      }
-                     else {
-                        print "BUG !\n";
-                        print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
-                        exit;
-                     }
+                  }
+                  else {
+                     print "BUG !\n";
+                     print main::Dumper($self->{miniprof}->{raw}->{$c}->{$e});
+                     exit;
                   }
                }
             }
@@ -868,9 +874,7 @@ sub _miniprof_parse_text {
       if((!defined $opt{cores}) || ($core ~~ @{$opt{cores}})){
          push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{val}}, $value);
          push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{time}}, $time);
-         if(defined $logical_time) {
-            push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{logical_time}}, $logical_time);
-         }
+         push(@{$self->{miniprof}->{raw}->{$core}->{$event}->{logical_time}}, $logical_time);
       }
    }
 
