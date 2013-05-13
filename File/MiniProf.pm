@@ -354,8 +354,11 @@ my %parse_options = (
       name => 'CPU to DRAM',
       events => [
          ## 4 nodes
-         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3' ],
-         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0' ],
+         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3', '!CPU_DRAM_NODE4' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
+
+         ## 8 nodes
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
       ],
       value => 'per_core_avg',
       legend => 'DRAM of node',
@@ -372,6 +375,7 @@ my %parse_options = (
          [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3', '!CPU_DRAM_NODE4' ],
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
          ## 8 nodes
+         [ 'CPU_DRAM_NODE0', 'CPU_DRAM_NODE1', 'CPU_DRAM_NODE2', 'CPU_DRAM_NODE3', 'CPU_DRAM_NODE4', 'CPU_DRAM_NODE5', 'CPU_DRAM_NODE6', 'CPU_DRAM_NODE7' ],
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
       ],
       value => 'locality_per_node',
