@@ -462,16 +462,40 @@ my %parse_options = (
    READ_LATENCY_GLOB => {
       name => 'Latency',
       events => [ 
-        [ '10040ffE3', '10040ffE2', '!10040ffE5', '!10040ffE4' ], #Number of mem accesses monitored, latency of these accesses
-        [ '10040ffE3', '10040ffE2', '10040ffE5', '10040ffE4'], #for 8 nodes machines...
+        [ '10040ffE3#allnodes', '10040ffE2#allnodes', '!10040ffE5', '!10040ffE4' ], #Number of mem accesses monitored, latency of these accesses; #all to indicate that the event must be monitored on ALL cores/nodes
+        [ '10040ffE3#allnodes', '10040ffE2#allnodes', '10040ffE5#allnodes', '10040ffE4#allnodes'], #for 8 nodes machines...
       ],
-      value => [
-         'sum_1/sum_0',
-         '(sum_1+sum_3)/(sum_0+sum_2)',
-      ],
+      value => 'sum_odd/sum_even',
       gnuplot_range => [ 0, 1000 ],
       gnuplot_per_core => 1,
    },
+
+   REMOTE_LATENCY_GLOB => {
+      name => 'Remote Latency',
+      events => [ 
+        [ '10000EFE3', '10000EFE2',
+          '10000DFE3', '10000DFE2', 
+          '10000BFE3', '10000BFE2', 
+          '100007FE3', '100007FE2', 
+          '10000FFE5', '10000FFE4',
+          '!10000EFE4' ],
+        [ '10000EFE3', '10000EFE2', #node 0->123
+          '10000DFE3', '10000DFE2', #node 1->023
+          '10000BFE3', '10000BFE2', 
+          '100007FE3', '100007FE2',
+          '10000FFE5', '10000FFE4', #node 0123->4567
+          '10000EFE5', '10000EFE4', 
+          '10000DFE5', '10000DFE4',
+          '10000BFE5', '10000BFE4',
+          '100007FE5', '100007FE4',
+          '10000FFE3', '10000FFE2',
+       ],
+      ],
+      value => 'sum_odd/sum_even',
+      gnuplot_range => [ 0, 1000 ],
+      gnuplot_per_core => 1,
+   },
+
    
    READ_CMD_LATENCY_0 => {
       name => 'READ_CMD_LATENCY_0',
@@ -614,8 +638,12 @@ sub _find_matching_evt {
    for my $ev (@{$event_array}) {
       my $match = 0;
 
+      my $fail_on_match = ($ev =~ m/^!/);
+      my ($core_restriction) = ($ev =~ m/#(.*)$/);
+
       my $evt = $ev;
       $evt =~ s/^!//;
+      $evt =~ s/#.*//;
 
       my $evt_hex = $evt;
       #For HWC events like '76', we also consider '400076' as a valid match
@@ -630,16 +658,23 @@ sub _find_matching_evt {
          $evt_hex = "".$evt_hex->as_hex;
          $evt_hex =~ s/^0x//;
       }
+
       for my $avail_evt (keys %{$self->{miniprof}->{events}}) {
          if(($self->{miniprof}->{events}->{$avail_evt}->{name} =~ m/^$evt$/)
             || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt$/i)
             || ($self->{miniprof}->{events}->{$avail_evt}->{hwc_value} =~ m/^$evt_hex$/i)) {
-            $match = 1;
-            $matches{$evt} = $avail_evt;
+            if(defined $core_restriction) {
+               $match = $self->{miniprof}->{events}->{$avail_evt}->{availability}->{$core_restriction};
+            } else {
+               $match = 1;
+            }
+            if($match && !$fail_on_match) {
+               $matches{$ev} = $avail_evt;
+            }
+            last if($match);
          }
       }
 
-      my $fail_on_match = ($ev =~ m/^!/);
       if(($match && $fail_on_match) || (!$match && !$fail_on_match)) {
          $fail = 1;
          last;
@@ -710,7 +745,7 @@ sub _do_info {
 
    switch($fun) {
       case 'sum_1/sum_0' {
-         File::MiniProf::Results::Avg::sum_1_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
+         File::MiniProf::Results::Avg::sum_odd_div_sum_even_per_core($self, $info, \%parse_options, \%opt);
       }
       case 'sum_0/sum_all' {
          File::MiniProf::Results::Avg::sum_0_div_sum_all_per_core($self, $info, \%parse_options, \%opt);
@@ -724,8 +759,8 @@ sub _do_info {
       case '(sum_1-sum_2)/sum_0' {
          File::MiniProf::Results::Avg::sum_1_sum_2_div_sum_0_per_core($self, $info, \%parse_options, \%opt);
       }
-      case '(sum_1+sum_3)/(sum_0+sum_2)' {
-         File::MiniProf::Results::Avg::sum_1_sum_3_div_sum_0_sum_2_per_core($self, $info, \%parse_options, \%opt);
+      case 'sum_odd/sum_even' {
+         File::MiniProf::Results::Avg::sum_odd_div_sum_even_per_core($self, $info, \%parse_options, \%opt);
       }
       case 'ht_link' {
          File::MiniProf::Results::HT::ht_link($self, $info, \%parse_options, \%opt);
@@ -755,12 +790,52 @@ sub _miniprof_parse_text {
    my ($self, %opt) = @_;
    return if (defined $self->{miniprof}->{_already_parsed});
 
+   $self->{miniprof}->{events_alias} = [];
+
    my $freq;
    while (my $line = <$self>) {
       #print $line;
-      if($line =~ m/#Event (\d): ([^\s]+) \((\w+)\)/) {
-         $self->{miniprof}->{events}->{$1}->{name} = $2;
-         $self->{miniprof}->{events}->{$1}->{hwc_value} = $3;
+      if($line =~ m/#Event (\d+): ([^\s]+) \((\w+)\)/) {
+         my ($_event, $_name, $_hwc) = ($1, $2, $3, 0);
+
+         if((!defined $opt{do_not_merge_events}
+               || $opt{do_not_merge_events} == 0) &&
+            ($line =~ m/Configured core\(s\): (\d+)/)) {
+            my $core = $1;
+            my $final_event = $_event;
+            for my $ev (keys(%{$self->{miniprof}->{events}})) {
+               if($self->{miniprof}->{events}->{$ev}->{hwc_value} eq $_hwc
+                  && !($core ~~ @{$self->{miniprof}->{events}->{$ev}->{cores}})) {
+                  $final_event = $ev;
+                  last;
+               }
+            }
+            $self->{miniprof}->{events}->{$final_event}->{name} //= $_name;
+            $self->{miniprof}->{events}->{$final_event}->{hwc_value} //= $_hwc;
+            push(@{$self->{miniprof}->{events}->{$final_event}->{cores}}, int($core));
+            @{$self->{miniprof}->{events}->{$final_event}->{cores}} = sort {$a <=> $b} @{$self->{miniprof}->{events}->{$final_event}->{cores}};
+
+            my %nodes;
+            for my $node (keys %{$self->{miniprof}->{memory_mapping}}) {
+               for my $c (@{$self->{miniprof}->{memory_mapping}->{$node}}) {
+                  if($c ~~ @{$self->{miniprof}->{events}->{$final_event}->{cores}}) {
+                     $nodes{$node} = 1;
+                     last;
+                  }
+               }
+            }
+            $self->{miniprof}->{events}->{$final_event}->{availability}->{allnodes} = scalar(keys %nodes) == scalar(keys %{$self->{miniprof}->{memory_mapping}})?1:0;
+            $self->{miniprof}->{events}->{$final_event}->{availability}->{allcores} = (@{$self->{miniprof}->{events}->{$final_event}->{cores}} ~~ @{$self->{miniprof}->{cores}})?1:0;
+
+            $self->{miniprof}->{events_alias}->[$_event] = $final_event;
+         } else {
+            $self->{miniprof}->{events}->{$_event}->{name} = $_name;
+            $self->{miniprof}->{events}->{$_event}->{hwc_value} = $_hwc;
+            $self->{miniprof}->{events}->{$_event}->{cores} = $self->{miniprof}->{cores};
+            $self->{miniprof}->{events}->{$_event}->{availability}->{allnodes} = 1;
+            $self->{miniprof}->{events}->{$_event}->{availability}->{allcores} = 1;
+            $self->{miniprof}->{events_alias}->[$_event] = $_event;
+         }
       }
       elsif ($line =~ m/#Clock speed: (\d+)/) {
          $self->{miniprof}->{freq} = $1;
@@ -774,6 +849,7 @@ sub _miniprof_parse_text {
             #print "Find core $1 for node $node\n";
             push @cores, int($1);
          }
+         push(@{$self->{miniprof}->{cores}}, @cores);
          $self->{miniprof}->{memory_mapping}->{$node} = \@cores;
          $freq = $1;
       }
@@ -789,6 +865,7 @@ sub _miniprof_parse_text {
    my $line_no = 0;
    my $nsamples = 0;
    my %filtered = ();
+   my @events_alias = @{$self->{miniprof}->{events_alias}};
 
    while (my $line = <$self>) {
       $line_no++;
@@ -803,6 +880,8 @@ sub _miniprof_parse_text {
          print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
          next;
       }
+
+      $event = $events_alias[$event];
 
       my $logical_time;
       my $percentage_running;
