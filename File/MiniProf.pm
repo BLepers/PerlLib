@@ -1073,6 +1073,7 @@ sub miniprof_merge {
    $file->{miniprof}->{freq} = $first_file->{miniprof}->{freq};
    $file->{miniprof}->{rdt_duration} = $first_file->{miniprof}->{rdt_duration};
    $file->{miniprof}->{memory_mapping} = $first_file->{miniprof}->{memory_mapping};
+   $file->{miniprof}->{cores} = $first_file->{miniprof}->{cores};
 
    my %final_events;
    my $max_samples = 0;
