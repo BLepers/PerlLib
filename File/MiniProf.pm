@@ -69,12 +69,14 @@ my %parse_options = (
       name => 'Instructions', 
       events => [ 'c0' ],
       value => 'per_core_sum', 
+      gnuplot => 0,
    },
 
    CYCLES => {
       name => 'Cycles',                    
       events => [ '76' ],
       value => 'per_core_sum', 
+      gnuplot => 0,
    },
 
    DTLB_MISS_INST => {
@@ -1007,6 +1009,7 @@ sub miniprof_parse {
          $parse_options{$ev_name}->{name} = $ev_name;
          $parse_options{$ev_name}->{events} = [$self->{miniprof}->{events}->{$e}->{hwc_value}];
          $parse_options{$ev_name}->{value} = 'per_core_sum';
+         $parse_options{$ev_name}->{gnuplot} = 0;
       }
       else {
          print "Event $self->{miniprof}->{events}->{$e}->{hwc_value} not recognized\n";
