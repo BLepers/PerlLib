@@ -898,6 +898,10 @@ sub _miniprof_parse_text {
          $logical_time = -1;
          $nsamples = 1;
       }
+      else {
+         print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
+         next;
+      }
 
 
       if(defined $filtered{$logical_time}) {
