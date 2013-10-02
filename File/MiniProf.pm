@@ -211,6 +211,16 @@ my %parse_options = (
       gnuplot_range => [ 0, 1 ],
    },
 
+   CPU_DRAM_ALL => {
+      name => 'Number of memory accesses',
+      events => [ 
+         [ '10040ffe0' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
+      ],
+      value => 'sum_all',
+   },
+
    L3_MISS_INST => {
       name => 'L3 Misses per Retired Instruction',                    
       events => [
@@ -386,7 +396,10 @@ my %parse_options = (
 
    MAPI => {
       name => 'CPU to all DRAM per instruction',
-      events => [ 'RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL' ],
+      events => [ 
+            ['RETIRED_INSTRUCTIONS', 'CPU_DRAM_ALL'],
+            ['c0', '10000ffe0']
+         ],
       value => 'sum_1/sum_0-global',
    },
 
@@ -613,7 +626,7 @@ sub _local_dram_fun {
       return &{$local_dram_fun} ($core);
    }
    else {
-      print "I don't know what's the local DRAM. Exiting...\n";
+      print "I don't know what's the local DRAM of core $core. Exiting...\n";
       exit;
    }
 }
@@ -781,6 +794,9 @@ sub _do_info {
       }
       case 'tlb_cost' {
          File::MiniProf::Results::TLB::cost($self, $info, \%parse_options, \%opt);
+      }
+      case 'sum_all' {
+         File::MiniProf::Results::Avg::sum_all_per_core($self, $info, \%parse_options, \%opt);
       }
       else {
          die $parse_options{$info->{name}}->{value}." function not implemented yet!";
