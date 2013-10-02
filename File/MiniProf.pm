@@ -13,6 +13,7 @@ use File::MiniProf::Results::Core;
 use File::MiniProf::Results::DRAM;
 use File::MiniProf::Results::Latency;
 use File::MiniProf::Results::TLB;
+use File::MiniProf::Results::Imbalance;
 
 package File::MiniProf;
 use Exporter 'import'; 
@@ -219,6 +220,15 @@ my %parse_options = (
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
       ],
       value => 'sum_all',
+   },
+
+   IMBALANCE => {
+      name => 'Imbalance (Carrefour definition)',
+      events => [ 
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
+         [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
+      ],
+      value => 'imbalance',
    },
 
    L3_MISS_INST => {
@@ -797,6 +807,9 @@ sub _do_info {
       }
       case 'sum_all' {
          File::MiniProf::Results::Avg::sum_all_per_core($self, $info, \%parse_options, \%opt);
+      }
+      case 'imbalance' {
+         File::MiniProf::Results::Imbalance::imbalance($self, $info, \%parse_options, \%opt);
       }
       else {
          die $parse_options{$info->{name}}->{value}." function not implemented yet!";
