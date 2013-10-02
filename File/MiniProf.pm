@@ -223,7 +223,7 @@ my %parse_options = (
    },
 
    IMBALANCE => {
-      name => 'Imbalance (Carrefour definition)',
+      name => 'Imbalance (Carrefour definition - in %)',
       events => [ 
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '!1004010e0' ],
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
@@ -1104,7 +1104,7 @@ sub miniprof_merge {
    }
 
    my $first_file = $miniprof_files->[0];
-   my $file = File::CachedFile::new('virtual');
+   my $file = File::CachedFile::new('virtual-'.join("-", @$files));
    $file->{miniprof}->{_already_parsed} = 1;
    $file->{miniprof}->{freq} = $first_file->{miniprof}->{freq};
    $file->{miniprof}->{rdt_duration} = $first_file->{miniprof}->{rdt_duration};

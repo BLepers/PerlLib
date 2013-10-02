@@ -22,7 +22,7 @@ sub imbalance {
    my $avg = _imb_average(\@sums);
    my $dev = _imb_stdev(\@sums);
    if($dev) {
-      $info->{results}->{ALL} = $avg/$dev;
+      $info->{results}->{ALL} = 100*$dev/$avg;
    } else {
       $info->{results}->{ALL} = 'No samples';
    }
