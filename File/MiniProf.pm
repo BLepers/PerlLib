@@ -382,7 +382,7 @@ my %parse_options = (
          ## 8 nodes
          [ '1004001e0', '1004002e0', '1004004e0', '1004008e0', '1004010e0', '1004020e0', '1004040e0', '1004080e0' ],
       ],
-      value => 'per_core_avg',
+      value => 'per_core_sum',
       legend => 'DRAM of node',
       #gnuplot_range => [ 0, 250 ],
    },
@@ -931,7 +931,6 @@ sub _miniprof_parse_text {
          print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
          next;
       }
-
 
       if(defined $filtered{$logical_time}) {
          next;
