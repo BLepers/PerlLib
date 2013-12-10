@@ -471,6 +471,7 @@ sub sar_parse_cpu {
    $self->{sar_cpu}->{raw}->{cpu} = \%cpus;
    $self->{sar_max_time_to_consider} = $last_time + $self->{sar_max_time_to_consider} if($self->{sar_max_time_to_consider} < 0);
 
+   my @gnuplot_xy;
    for my $cpu (keys %{$self->{sar_cpu}->{raw}->{cpu}}) {
       next if $cpus{$cpu}->{always_dead};
 
@@ -488,25 +489,25 @@ sub sar_parse_cpu {
          my @_times = sort keys %{$self->{sar_cpu}->{raw}->{cpu}->{$cpu}->{idle}};
          my @_values = map { $self->{sar_cpu}->{raw}->{cpu}->{$cpu}->{idle}->{$_} } @_times;
 
-         my @gnuplot_xy;
          push(@gnuplot_xy, \@_times); #x
          push(@gnuplot_xy, \@_values); #y
+      }
+   }
 
+   if((defined $opt) && $opt->{gnuplot}) {
          my $plot = Graphics::GnuplotIF->new(persist=>1);
-         $plot->gnuplot_set_title( "CPU $cpu" );
+         $plot->gnuplot_set_title( "CPUs" );
          $plot->gnuplot_set_ylabel("Idleness (%)");
          $plot->gnuplot_set_xlabel("Time (s)");
          $plot->gnuplot_set_style( "points" );
          
          $plot->gnuplot_set_yrange(0, 100);
          
-         if($opt->{gnuplot_file}){
-            $plot->gnuplot_hardcopy( $self->{filename}.".core$cpu.png", 'png' );   
-         }
+         #if($opt->{gnuplot_file}){
+         #$plot->gnuplot_hardcopy( $self->{filename}.".core$cpu.png", 'png' );   
+         #}
 
          $plot->gnuplot_plot_many( @gnuplot_xy );          
-      }
-
    }
 
    my ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'idleness');

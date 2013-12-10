@@ -86,6 +86,18 @@ my %parse_options = (
       value => 'sum_1/sum_0', 
    },
 
+   LDST_BUFF_FULL_PER_INST => {
+      name => 'Load/Store buffer full per instruction',                    
+      events => [ 'c0', '323' ],
+      value => 'sum_1/sum_0', 
+   },
+
+   LDST_BUFF_FULL_PER_CLK => {
+      name => 'Load/Store buffer full per unhalted clk',                    
+      events => [ '76', '323' ],
+      value => 'sum_1/sum_0', 
+   },
+
    HT_LINK_0_0_LOAD => {
       name => 'HT Link 0.0 load',
       events => [ '1FF6', '17F6' ],
@@ -629,7 +641,7 @@ sub _local_dram_fun {
          last if ($local_dram != -1);
       }
       
-      die "Did not find any die for core $core\n" if ($local_dram == -1);
+      die "Did not find any die for core $core ($self)\n" if ($local_dram == -1);
       return $local_dram;
    }
    elsif (defined $local_dram_fun) {
@@ -733,7 +745,7 @@ sub _find_something_to_do {
       }
    }
    if(!defined($self->{miniprof}->{avail_info})) {
-      die "Found nothing to do with events [".join(", ", map($_->{name}, (values %{$self->{miniprof}->{events}})))."]";
+      die "Found nothing to do with events [".join(", ", map($_->{name}, (values %{$self->{miniprof}->{events}})))."] ($self)";
    }
 }
 
@@ -994,11 +1006,11 @@ sub _miniprof_parse_text {
 
 
    if($nsamples && scalar(keys %filtered)/$nsamples > 0.1) {
-      printf "[WARNING] Ignoring %d entries (%.1f %%, file = %s)\n", scalar(keys %filtered), scalar(keys %filtered) * 100./$nsamples, $self->{filename};
+      printf "#[WARNING] Ignoring %d entries (%.1f %%, file = %s)\n", scalar(keys %filtered), scalar(keys %filtered) * 100./$nsamples, $self->{filename};
    }
 
    if(!$nsamples) {
-      printf "[WARNING] No samples found in file %s\n", $self->{filename};
+      printf "#[WARNING] No samples found in file %s\n", $self->{filename};
    }
 
    $self->{miniprof}->{rdt_duration} = $last_time - $first_time if($last_time && $first_time);
