@@ -66,13 +66,6 @@ my %parse_options = (
       value => 'sum_1/sum_0', #Numbers are relative to previous events. 1 is RETIRED.
    },
 
-   INSTRUCTIONS => {
-      name => 'Instructions', 
-      events => [ 'c0' ],
-      value => 'per_core_sum', 
-      gnuplot => 0,
-   },
-
    CYCLES => {
       name => 'Cycles',                    
       events => [ '76' ],
