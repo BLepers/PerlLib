@@ -795,9 +795,6 @@ sub _do_info {
       case 'ht_link' {
          File::MiniProf::Results::HT::ht_link($self, $info, \%parse_options, \%opt);
       }
-      case 'per_core_avg' {
-         File::MiniProf::Results::Core::per_core($self, $info, \%parse_options, \%opt);
-      }
       case 'per_core_sum' {
          File::MiniProf::Results::Core::per_core_sum($self, $info, \%parse_options, \%opt);
       }
