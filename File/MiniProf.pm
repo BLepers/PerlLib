@@ -608,8 +608,14 @@ my %parse_options = (
 
 
    PAGE_TBL_MINOR_FAULTS_PER_INST => {
-      name => "Minor page fault per instructions",
+      name => "Minor page fault per instruction",
       events => ['RETIRED_INSTRUCTIONS', 'minor-faults'],
+      value => 'sum_1/sum_0',
+   },
+
+   CPU_MIGR_PER_INST => {
+      name => "CPU migrations per instruction",
+      events => ['RETIRED_INSTRUCTIONS', 'cpu-migrations'],
       value => 'sum_1/sum_0',
    },
 
