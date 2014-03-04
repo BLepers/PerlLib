@@ -59,7 +59,6 @@ Returns:
 
 my %parse_options = (
    ## Processed measurements
-   
    IPC => {
       name => 'IPC',                    
       events => [ '76', 'c0' ], # cpu clock unhalted, retired instructions
@@ -171,14 +170,20 @@ my %parse_options = (
 
    L1_MISS_RATIO => {
       name => 'L1 Miss Ratio',     
-      events => [ '40', '41' ], # L1 accesses, L1 misses 
+      events => [
+         [ '40', '41' ], # L1 accesses, L1 misses 
+         [ '40', 'ff41' ], # L1 accesses, L1 misses 
+      ],
       value => 'sum_1/sum_0', 
       gnuplot_range => [ 0, 1 ],
    },
 
    L1_MISS_INST => {
       name => 'L1 Misses per Retired Instruction',                    
-      events => [ 'c0', '41' ], # retired instructions, L1 misses
+      events => [ 
+         ['c0', '41' ], # retired instructions, L1 misses
+         ['c0', 'ff41' ], # retired instructions, L1 misses
+      ],
       value => 'sum_1/sum_0', 
    },
    
@@ -260,7 +265,7 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    },
    
-  MEMORY_CONTROLLER_REQUEST_INST => {
+   MEMORY_CONTROLLER_REQUEST_INST => {
       name => 'Memory Controller Requests per Retired Instruction',                    
       events => [ 'c0', '10040fff0' ], # retired instructions, Memory controller requests
       value => 'sum_1/sum_0-global', 
@@ -555,7 +560,7 @@ my %parse_options = (
       gnuplot => 0,
    },
    
-  READ_CMD_REQUESTS_0 => {
+   READ_CMD_REQUESTS_0 => {
       name => 'READ_CMD_REQUESTS_0',
       events => [ '100401fE3' ],
       value => 'latencies',
@@ -600,10 +605,10 @@ my %parse_options = (
 
 
    ## Software events
-   PAGE_TBL_MINOR_FAULTS => {
-      name => "PAGE_TBL_MINOR_FAULTS",
-      events => ['minor-faults'],
-      value => 'per_core_sum'
+   PAGE_TBL_MINOR_FAULTS_INST => {
+      name => "PAGE_TBL_MINOR_FAULTS_INST",
+      events => ['RETIRED_INSTRUCTIONS', 'minor-faults'],
+      value => 'sum_1/sum_0'
    },
 
 
@@ -616,6 +621,12 @@ my %parse_options = (
    CPU_MIGR_PER_INST => {
       name => "CPU migrations per instruction",
       events => ['RETIRED_INSTRUCTIONS', 'cpu-migrations'],
+      value => 'sum_1/sum_0',
+   },
+
+   CTX_SWITCH_PER_INST => {
+      name => "CPU migrations per instruction",
+      events => ['RETIRED_INSTRUCTIONS', 'context-switches'],
       value => 'sum_1/sum_0',
    },
 

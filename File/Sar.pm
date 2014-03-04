@@ -106,14 +106,15 @@ sub _sar_sanity_check {
 }
 
 sub sar_parse_dev {
-   my ($self, $opt_ptr) = @_;
+   my ($self, $opt) = @_;
    $self->_sar_sanity_check;
-   my $max_per_nics = eval { $opt_ptr->{max_per_nics} } // 940;
+   my $max_per_nics = eval { $opt->{max_per_nics} } // 940;
 
    my $first_time = 0;
    my $last_time = 0;
    my %times = ();
    my %eths = ();
+   my %global = ();
    while (my $line = <$self>) {
       #11:59:01 AM     IFACE   rxpck/s   txpck/s    rxkB/s    txkB/s   rxcmp/s   txcmp/s  rxmcst/s
       #11:59:03 AM     eth12      0.00      0.00      0.00      0.00      0.00      0.00      0.00
@@ -126,8 +127,13 @@ sub sar_parse_dev {
 
          $times{$last_time}->{$eth}->{tx} = $txB;
          $times{$last_time}->{$eth}->{rx} = $rxB;
+         $times{$last_time}->{GLOBAL}->{tx} += $txB;
+         $times{$last_time}->{GLOBAL}->{rx} += $rxB;
+
          $eths{$eth}->{tx}->{$last_time} = $txB;
          $eths{$eth}->{rx}->{$last_time} = $rxB;
+         $global{tx}->{$last_time} += $txB;
+         $global{rx}->{$last_time} += $rxB;
       }
    }
    
@@ -146,7 +152,7 @@ sub sar_parse_dev {
          #$self->{sar_dev}->{eth}->{$eth}->{$x}->{sum} = int($sum * 8 / 1024);
          #$self->{sar_dev}->{eth}->{$eth}->{$x}->{count} = $count;
 
-         if((defined $opt_ptr) && $opt_ptr->{gnuplot} && $self->{sar_dev}->{eth}->{$eth}->{$x}->{average} > 0) {
+         if((defined $opt) && $opt->{gnuplot} && $self->{sar_dev}->{eth}->{$eth}->{$x}->{average} > 0) {
             my @_times = sort keys %{$self->{sar_dev}->{raw}->{eth}->{$eth}->{$x}};
             my @_values = map { $self->{sar_dev}->{raw}->{eth}->{$eth}->{$x}->{$_} } @_times;
 
@@ -156,12 +162,42 @@ sub sar_parse_dev {
 
             my $plot = Graphics::GnuplotIF->new(persist=>1);
             $plot->gnuplot_set_title( "Eth$eth -- $x" );
+
+            if($opt->{gnuplot_file}){
+               $plot->gnuplot_hardcopy( $self->{filename}.".ETH$eth.$x.png", 'png' );   
+            }
+
             $plot->gnuplot_set_style( "points" );      
             $plot->gnuplot_plot_many( @gnuplot_xy );
          }
       }
    }
 
+   for my $x (keys %global) {
+      my ($average, $sum, $count) = _sar_get_average_from_relevant_data($global{$x}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
+
+      my $x_avg = $average * 8 / 1024;
+      my $x_usage = $average * 100 / $max_per_nics;
+
+      if((defined $opt) && $opt->{gnuplot} && $average > 0) {
+         my @_times = sort keys %{$global{$x}};
+         my @_values = map { $global{$x}->{$_} } @_times;
+
+         my @gnuplot_xy;
+         push(@gnuplot_xy, \@_times); #x
+         push(@gnuplot_xy, \@_values); #y
+
+         my $plot = Graphics::GnuplotIF->new(persist=>1);
+         $plot->gnuplot_set_title( "GLOBAL -- $x" );
+         
+         if($opt->{gnuplot_file}){
+            $plot->gnuplot_hardcopy( $self->{filename}.".ETHGLOBAL.$x.png", 'png' );   
+         }
+         
+         $plot->gnuplot_set_style( "points" );      
+         $plot->gnuplot_plot_many( @gnuplot_xy );
+      }
+   }
   
    ## TODO- Not compatible with the new layout 
    #my ($average, $min, $max) = _sar_get_global_average($self->{sar_dev}->{eth});
