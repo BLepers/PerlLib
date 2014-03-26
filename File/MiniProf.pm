@@ -409,6 +409,15 @@ my %parse_options = (
       legend => 'Local DRAM of node',
    },
 
+   REMOTE_DRAM_RATIO => {
+      name => 'CPU to DRAM non locality',
+      events => [
+         [ 'b8e9', '98e9' ],
+      ],
+      value => 'sum_1/sum_0',
+      legend => 'Local DRAM of node',
+   },
+
    MAPI => {
       name => 'CPU to all DRAM per instruction',
       events => [ 
