@@ -372,7 +372,14 @@ my %parse_options = (
 
    HT_LINK => {
       name => 'Usage of HT Links',
-      events => [ 'HT_LINK\d', 'HT_LINK0-NOP', 'HT_LINK1-NOP', 'HT_LINK2-NOP' ],
+      events => [ '1FF6', '17F6',  #0,0
+                  '9FF6', '97F6',  #0,1
+                  '1FF7', '17F7',  #1,0
+                  '9FF7', '97F7', 
+                  '1FF8', '17F8',
+                  '9FF8', '97F8', 
+                  '100001FF9', '1000017F9' ,
+                  '100009FF9', '1000097F9' ],
       value => 'ht_link',
       gnuplot_range => [ 0, 100 ],
    },
@@ -416,6 +423,14 @@ my %parse_options = (
       ],
       value => 'sum_1/sum_0',
       legend => 'Local DRAM of node',
+   },
+
+   MAPTU => {
+      name => 'CPU to all DRAM per clk',
+      events => [ 
+            ['76', '10000ffe0']
+         ],
+      value => 'sum_1/sum_0-global',
    },
 
    MAPI => {

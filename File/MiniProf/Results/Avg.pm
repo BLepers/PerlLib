@@ -322,12 +322,18 @@ sub sum_1_div_sum_0_global {
    my $sum_evt0;
    my $sum_evt1;
    
+   my %nodes_sums_evt0;
+   my %nodes_sums_evt1;
+
    for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
       my ($avg0, $sum0, $count0) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_0 );
       my ($avg1, $sum1, $count1) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_1 );
 
       $sum_evt0 += $sum0;
       $sum_evt1 += $sum1;
+
+      $nodes_sums_evt0{$self->_local_dram_fun($core)} += $sum0;
+      $nodes_sums_evt1{$self->_local_dram_fun($core)} += $sum1;
    }
    
    if(!defined $sum_evt0 || !defined $sum_evt1) {
@@ -336,6 +342,12 @@ sub sum_1_div_sum_0_global {
    }
    
    $info->{results}->{ALL} = $sum_evt1 / $sum_evt0;
+
+   for my $node (keys %nodes_sums_evt0) {
+      if($nodes_sums_evt0{$node}) {
+         $info->{results}->{'NODE'.$node} = $nodes_sums_evt1{$node} / $nodes_sums_evt0{$node};
+      }
+   }
 
    if($opt->{gnuplot}) {
       if(!defined($opt->{gnuplot_max_cpu}))  {
