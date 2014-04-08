@@ -6,14 +6,14 @@ use lib "$FindBin::Bin/../PerlLib";
 use File::Utils;
 use File::Sar;
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 3;
+$Data::Dumper::Maxdepth = 4;
 
 
 my $file = File::CachedFile::new($ARGV[0]);
 #$file->{sar_min_time_to_consider} = 360;
 #$file->{sar_max_time_to_consider} = -180;
 
-my $result = $file->sar_parse({gnuplot=>1});
+my $result = $file->sar_parse({gnuplot=>1, gnuplot_file=>"png"});
 print "$result\n";
 $result->{raw} = "SUPPRESSED"; #So that the output remains readable
 print "Sar output (->{raw} suppressed):\n".Dumper($result);
