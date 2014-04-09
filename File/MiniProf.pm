@@ -250,11 +250,28 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    },
    
+   L3_MISS_CLK => {
+      name => 'L3 Misses per Clk',                    
+      events => [
+         [ '76', '40040f7e1' ], # retired instructions, L3 misses
+         [ '76', '40040ffe1' ], # retired instructions, L3 misses
+      ],
+      value => 'sum_1/sum_0-global', 
+   },
+
    L3_ACCESS_INST => {
       name => 'L3 Accesses per Retired Instruction',                    
       events => [
          [ 'c0', '40040f7e0' ], # retired instructions, L3 accesses
          [ 'c0', '40040ffe0' ], # retired instructions, L3 accesses
+      ],
+      value => 'sum_1/sum_0-global', 
+   }, 
+
+   L3_LATENCY => {
+      name => 'Latency of L3 accesses',                    
+      events => [
+         [ '4000002ef', '4000001ef' ], # Number of access, latency count
       ],
       value => 'sum_1/sum_0-global', 
    }, 
@@ -426,7 +443,7 @@ my %parse_options = (
       events => [
          [ 'b8e9', '98e9' ],
       ],
-      value => 'sum_1/sum_0',
+      value => 'sum_1/sum_0-global',
       legend => 'Local DRAM of node',
    },
 
