@@ -44,6 +44,7 @@ sub local_dram_usage {
       
       if($sum_all > 0) {
          $info->{results}->{$core}->{'local access ratio'} = $sum/$sum_all;
+         $info->{results}->{'NODE'.$self->_local_dram_fun($core)}->{'local access ratio'} = $sum/$sum_all;
       }
 
       

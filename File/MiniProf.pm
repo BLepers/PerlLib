@@ -288,10 +288,74 @@ my %parse_options = (
       value => 'sum_1/sum_0-global', 
    }, 
 
+   MEMORY_CONTROLLER_REQUEST_INST2 => {
+      name => 'Memory Controller Requests per Retired Instruction excluding DCT full',
+      events => [ 'c0', '100407ff0' ], # retired instructions, Memory controller requests
+      value => 'sum_1/sum_0-global', 
+   }, 
+
+   MEMORY_CONTROLLER_REQUEST_CLK => {
+      name => 'Memory Controller Requests per Retired Instruction',                    
+      events => [ '76', '10040fff0' ], # retired instructions, Memory controller requests
+      value => 'sum_1/sum_0-global', 
+   }, 
+
+   MEMORY_CONTROLLER_REQUEST_CLK2 => {
+      name => 'Memory Controller Requests per Retired Instruction excluding DCT full',
+      events => [ '76', '100407ff0' ], # retired instructions, Memory controller requests
+      value => 'sum_1/sum_0-global', 
+   }, 
+
    ICACHE_MISS_RATIO => {
        name => 'Instruction Cache Miss Ratio',
        events => [ '80', '81' ], # instruction cache fetches, instruction cache misses
        value => 'sum_1/sum_0',
+   },
+
+   FPLDBUFFFULL_PER_INSTR => {
+      name => 'FD/LD load buffer full per instruction',
+      events => [ 'c0', '34' ],
+      value => 'sum_1/sum_0', 
+   },
+
+   DECODER_EMPTY_PER_INSTR => {
+      name => 'Decoder empty per instruction',
+      events => [ 'c0', 'd0' ],
+      value => 'sum_1/sum_0', 
+   },
+
+   DISPATH_FAILED_PER_INSTR => {
+      name => 'Dispatch failed per instruction',
+      events => [ 'c0', 'd1' ],
+      value => 'sum_1/sum_0', 
+   },
+
+   LOCKED_PER_INSTR => {
+      name => 'Locked instructions per instruction',
+      events => [ 'c0', '124' ],
+      value => 'sum_1/sum_0', 
+   },
+
+   DRAMEO_PER_INSTR => {
+      name => 'DRAM Access per instruction',
+      events => [ 'c0', '3fe0' ],
+      value => 'sum_1/sum_0-global', 
+   },
+
+   PROBES_PER_INSTR => {
+      name => 'Probes per instruction',
+      events => [ 'c0', 'fec' ],
+      value => 'sum_1/sum_0-global', 
+   },
+   PROBES_MISS_PER_INSTR => {
+      name => 'Probes per instruction',
+      events => [ 'c0', '1ec' ],
+      value => 'sum_1/sum_0-global', 
+   },
+   PROBES_MISS_RATIO => {
+      name => 'Probes per instruction',
+      events => [ 'fec', '1ec' ],
+      value => 'sum_1/sum_0-global', 
    },
 
    ICACHE_MISS_INST => {

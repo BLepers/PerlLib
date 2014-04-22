@@ -41,7 +41,7 @@ Usage :
 my $f = format::new;
    $f->add_values(%)             Add a line and create columns if they don't exist
                                  It is possible to specify the order of columns in they name : 0-name will be the first column and will be displayed as "name"
-                                 Eg.: $f->add_values({ 'title1' => 'test', 'title2' => 0.6 });
+                                 E.g., $f->add_values({ 'title1' => 'test', 'title2' => 0.6 });
 
    $f->add_partial_values(%)     Same as add_values but doesn't fill previously unexisting columns with empty values
    $f->add_partial_values_on_last_line(%)     Same but does fill unexisting columns to only add stuff on the last line. 
@@ -49,7 +49,7 @@ my $f = format::new;
 
    $f->set_format(%)             Specifies formating rules for the columns
                                  Possible values : 'left', 'right', 'center' or anything recognized by printf. Default is 'center'.
-                                 Eg.: $f->set_format({ 'title1' => '[%s]', 'title2' => 'right' });
+                                 E.g., $f->set_format({ 'title1' => '[%s]', 'title2' => 'right' });
    $f->set_default_format($)     ...
 
    $f->set_validator(%)          Specifies a validator for the columns (default none)
@@ -68,6 +68,10 @@ my $f = format::new;
                                    val     val
                                  [Subtitle] ----
                                    val     val
+
+   $f->sort_on($,&)              Sort the lines of the array.
+                                 E.g., $f->sort_on('toto');
+                                 E.g., $f->sort_on('toto', sub { $a->[1] cmp $b->[1] });
 
    $f->print;
 =cut
@@ -247,6 +251,30 @@ sub add_partial_values_on_last_line {
    }
 }
 
+sub sort_on {
+   my ($self, $obj, $sort) = @_;
+   $sort //= sub { $a->[1] <=> $b->[1] };
+
+   my $key = get_values_from_user_input(($obj));
+   my $k = $key->[0]->{final};
+   if(!defined($self->{cols}->{$k}->{vals})) {
+      confess "Column $obj does not exists\n";
+   } else {
+      my @vals;
+      for (my $i = 0; $i < scalar(@{$self->{cols}->{$k}->{vals}}); $i++) {
+         push(@vals, [$i, $self->{cols}->{$k}->{vals}->[$i]]);
+      }
+
+      tie my %cols, "Tie::IxHash";
+      my @svals = sort $sort @vals;
+      for my $val (@svals) {
+         for my $col (keys %{$self->{cols}}) {
+            push(@{$cols{$col}->{vals}}, $self->{cols}->{$col}->{vals}->[$val->[0]]);
+         }
+      }
+      $self->{cols} = \%cols;
+   }
+}
 
 sub add_separation_line {
    my ($self, $separator) = @_;

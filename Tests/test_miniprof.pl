@@ -19,6 +19,7 @@ $Data::Dumper::Maxdepth = 5;
 #my $result = $file->miniprof_parse(gnuplot=>1, gnuplot_max_cpu=>4, gnuplot_file=>'png', cores => [3]);
 
 my %opt = (gnuplot=>0);
+#my %opt = (gnuplot=>1, gnuplot_file=>'png', cores=>[0, 48, 56]);
 my $file = miniprof_merge(\@ARGV, %opt);
 my $result = $file->miniprof_parse(%opt);
 

@@ -22,7 +22,6 @@ sub ht_link {
       for my $link (0..7) {
          my ($avg_all, $sum_all, $count_all) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[2*$link] );
          my ($avg_link, $sum_link, $count_link) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[2*$link+1] );
-
          next if ($avg_all == 0);
          next if ($sum_all <= $sum_link || $sum_link == 0); # More DATA than NOP+DATA, that's bad (usually disconnected link)
          $info->{results}->{$core}->{'ht_link'.int($link/2).".".($link%2)} = $sum_link/$sum_all; #HT Usage : 0 = good, 1 = bad
