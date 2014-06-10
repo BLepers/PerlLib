@@ -5,39 +5,36 @@ use FindBin;
 use lib "$FindBin::Bin/../PerlLib";
 use ClusterSSH;
 use Data::Dumper;
+use Getopt::Long;
+
 $| = 1;
 
-my @nodes = ( "proton.inrialpes.fr" );
+my @nodes;
+my $help;
+my $cmdl;
 
-print "MAIN WINDOW...\nTest going on...";
+sub usage {
+    print "Usage: $0 [-n <node>]+ -cmd <command>\n";
+    exit -1;
+}
+
+my $result = GetOptions(
+   "cmd=s"      => \$cmdl,  # string
+   "help|h"     => \$help,  # flag
+   "node|n=s"   => \@nodes  # list
+);
+
+if ( scalar(@nodes) == 0 || defined $help || !defined $cmdl) {
+   usage();
+}
+
+print "Running $cmdl on nodes: ".join(" ", @nodes)."\n";
+
 my $client_nodes = ClusterSSH::new( \@nodes );
-$client_nodes->run_cmd( "echo 'toto'; sleep 1; echo 'oto'; sleep 1; echo 'fjifj'; sleep 1; echo 'fdsj'; echo 'toto'; echo 'Error'; sleep 1; echo 'oto'; sleep 1; echo 'fjifj'; sleep 1; echo 'fdsj'; echo 'Error';", undef, {
-   do_not_profile => 0,
-   silent => 0,
-   do_not_join => 1,
-   separate_window => 1,
-});
-my $client_nodes2 = ClusterSSH::new( [ 'localhost' ] );
-$client_nodes2->run_cmd( "echo 'toto'; sleep 1; echo 'oto'; sleep 1; echo 'fjifj'; sleep 1; echo 'fdsj'; echo 'toto'; sleep 1; echo 'oto'; sleep 1; echo 'fjifj'; sleep 1; echo 'fdsj'; ", undef, {
-   do_not_profile => 0,
-   silent => 0,
-   do_not_join => 1,
-   separate_window => 1,
-});
-my $client_nodes3 = ClusterSSH::new( [ 'gluon' ] );
-$client_nodes3->run_scriptfile( 'test_sar.pl', undef, {
-   do_not_profile => 0,
-   silent => 0,
+$client_nodes->run_cmd($cmdl, undef, {
+   profile         => 0,
+   silent          => 0,
+   do_not_join     => 0,
    separate_window => 0,
+   user            => "root",
 });
-$client_nodes3->run_scriptfile( 'test_sar.pl', undef, {
-   do_not_profile => 0,
-   silent => 0,
-   separate_window => 0,
-});
-
-$client_nodes->wait_threads;
-$client_nodes2->wait_threads;
-
-print " and done.\n";
-sleep 3;
