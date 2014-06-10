@@ -108,7 +108,7 @@ sub run_cmd {
             if($opt->{separate_window}) {
                 print $line;
             } else {
-                print "[$self] $line";
+                print "[$self - $self->{number}] $line";
             }
         }
     }
@@ -200,7 +200,11 @@ sub new {
     bless $self;
 
     my $injector_num = 0;
-    $self->{nodes}               = {map { $_ => ClusterSSHNode::new($_, $injector_num++, $nodes) } @$nodes};
+
+    for my $n (@$nodes) {
+        $self->{nodes}->{$n."_".$injector_num} = ClusterSSHNode::new($n, $injector_num, $nodes);
+        $injector_num++;
+    }
 
     $self->{sar}->{watch_memory_usage}  = 0;
     $self->{sar}->{watch_cpu_usage}     = 0;
