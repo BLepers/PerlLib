@@ -60,8 +60,10 @@ sub _sar_get_average_from_relevant_data {
    my $count = 0;
    my $max = 0;
    my $min = -1;
+
    for my $key (keys %$hash_ref) {
       next if($key > $max_time_to_consider || $key < $min_time_to_consider);
+
       $sum += $hash_ref->{$key};
       $count++;
       $max = $hash_ref->{$key} if($hash_ref->{$key} > $max);
@@ -566,7 +568,6 @@ sub sar_parse_cpu {
 
    my ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'idleness');
    $self->{sar_cpu}->{average_idleness} = int($average);
-   $self->{sar_cpu}->{average} = int($average);
    $self->{sar_cpu}->{min_idleness} = int($min);
    $self->{sar_cpu}->{max_idleness} = int($max);
    $self->{sar_cpu}->{usage} = int(100-$average);
@@ -576,12 +577,12 @@ sub sar_parse_cpu {
    ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'sys');
    $self->{sar_cpu}->{average_sys} = int($average);
    $self->{sar_cpu}->{min_sys} = int($min);
-   $self->{sar_cpu}->{max_sys} = int($min);
+   $self->{sar_cpu}->{max_sys} = int($max);
 
    ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'user');
    $self->{sar_cpu}->{average_user} = int($average);
    $self->{sar_cpu}->{min_user} = int($min);
-   $self->{sar_cpu}->{max_user} = int($min);
+   $self->{sar_cpu}->{max_user} = int($max);
 
    return $self->{sar_cpu};
 }
