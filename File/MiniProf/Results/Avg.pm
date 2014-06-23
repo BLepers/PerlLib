@@ -32,7 +32,7 @@ sub sum_all_per_core {
          $glob_sum += $sum;
          $core_sum += $sum;
       }
-      
+
       $info->{results}->{$core} = $core_sum;
 
       if($opt->{gnuplot}) {
@@ -54,7 +54,7 @@ sub sum_all_per_core {
 
    $info->{results}->{ALL} = $glob_sum;
 
-   if($opt->{gnuplot}) {      
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
@@ -90,7 +90,7 @@ sub sum_odd_div_sum_even_per_core {
             $odd_sum += $sum;
          }
       }
-      
+
       if($even_sum != 0) {
          $info->{results}->{$core} = $odd_sum / $even_sum;
       }
@@ -124,7 +124,7 @@ sub sum_odd_div_sum_even_per_core {
       $info->{results}->{ALL} = "No samples";
    }
 
-   if($opt->{gnuplot}) {      
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
@@ -152,9 +152,9 @@ sub sum_0_sum_1_div_sum_2_per_core {
       my ($avg1, $sum1, $count1) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_1 );
       my ($avg2, $sum2, $count2) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_2 );
 
-      $glob_sum_0 += $sum0; 
-      $glob_sum_1 += $sum1; 
-      $glob_sum_2 += $sum2; 
+      $glob_sum_0 += $sum0;
+      $glob_sum_1 += $sum1;
+      $glob_sum_2 += $sum2;
 
       if($sum2 != 0) {
          $info->{results}->{$core} = ($sum0+$sum1)/($sum2);
@@ -183,7 +183,7 @@ sub sum_0_sum_1_div_sum_2_per_core {
       $info->{results}->{ALL} = "No samples";
    }
 
-   if($opt->{gnuplot}) {      
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
@@ -242,7 +242,7 @@ sub sum_0_div_sum_all_per_core {
       $info->{results}->{ALL} = "No samples";
    }
 
-   if($opt->{gnuplot}) {      
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
@@ -269,7 +269,7 @@ sub sum_1_sum_2_div_sum_0_per_core {
       my ($avg1, $sum1, $count1) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_1 );
       my ($avg2, $sum2, $count2) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $event_2 );
 
-      $glob_sum_0 += $sum0; 
+      $glob_sum_0 += $sum0;
       $glob_sum_1 += $sum1;
       $glob_sum_2 += $sum2;
 
@@ -284,7 +284,7 @@ sub sum_1_sum_2_div_sum_0_per_core {
                my $val_0 = $self->{miniprof}->{raw}->{$core}->{$event_0}->{val}->[$i];
                my $val_1 = $self->{miniprof}->{raw}->{$core}->{$event_1}->{val}->[$i];
                my $val_2 = $self->{miniprof}->{raw}->{$core}->{$event_2}->{val}->[$i];
-               
+
                my $avg = ($val_1 && $val_0)?(($val_1-$val_2)/$val_0):0;
                push(@vals, $avg);
             }
@@ -301,7 +301,7 @@ sub sum_1_sum_2_div_sum_0_per_core {
       $info->{results}->{ALL} = "No samples";
    }
 
-   if($opt->{gnuplot}) {      
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }
@@ -321,7 +321,7 @@ sub sum_1_div_sum_0_global {
 
    my $sum_evt0;
    my $sum_evt1;
-   
+
    my %nodes_sums_evt0;
    my %nodes_sums_evt1;
 
@@ -335,12 +335,12 @@ sub sum_1_div_sum_0_global {
       $nodes_sums_evt0{$self->_local_dram_fun($core)} += $sum0;
       $nodes_sums_evt1{$self->_local_dram_fun($core)} += $sum1;
    }
-   
+
    if(!defined $sum_evt0 || !defined $sum_evt1) {
       printf "Nothing to analyse...\n";
       return undef;
    }
-   
+
    $info->{results}->{ALL} = $sum_evt1 / $sum_evt0;
 
    for my $node (keys %nodes_sums_evt0) {
@@ -368,7 +368,7 @@ sub sum_1_div_sum_0_global {
       }
    }
 
-   if($opt->{gnuplot}) {   
+   if($opt->{gnuplot}) {
       $plot->gnuplot_set_plot_titles(map("Global", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
       $plot->gnuplot_plot_many( @gnuplot_xy );
    }

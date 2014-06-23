@@ -331,7 +331,7 @@ sub _miniprof_parse_text {
          $freq = $1;
       }
 
-      last if($line =~ m/#Event	Core/);
+      last if($line =~ m/#\s*Event\s+Core/);
       next if($line =~ m/^#/);
       next if($line =~ m/^signal/);
    }
@@ -349,6 +349,8 @@ sub _miniprof_parse_text {
 
       next if($line =~ m/^#/);
       next if($line =~ m/^signal/);
+
+      $line =~ s/^\s*//; # Remove the initial spaces if any
 
       my @content = split(/\s+/, $line);
       (my $event, my $core, my $time, my $value) = @content;

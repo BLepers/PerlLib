@@ -24,9 +24,9 @@ sub per_core_sum {
       my $to_plot = 0;
       for my $i (0..$tsize) {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
-         
+
          my $local_dram = File::MiniProf::_local_dram_fun($self, $core, $opt->{local_dram_fun});
-         
+
          $info->{results}->{$core}->[$i] = $sum;
          $info->{results}->{GLOBAL}->[$i] += $sum;
          $info->{results}->{"NODE$local_dram"}->[$i] += $sum;
@@ -50,15 +50,14 @@ sub per_core_sum {
                push(@plota, $self->{miniprof}->{raw}->{$core}->{$events[$link]}->{time});
                push(@plota, \@vals);
             }
-      
+
             $plot->gnuplot_set_plot_titles(map(($parse_options->{$info->{name}}->{legend}//'')." $_", (0..$tsize)));
-            
-            $plot->gnuplot_plot_many( 
+
+            $plot->gnuplot_plot_many(
                @plota
             );
          }
       }
-
    }
 }
 

@@ -30,7 +30,7 @@ Returns:
 my %device_capabilites = (
     #"net" => 940, ## 1Gb/s
     "net" => 9900, ## 10Gb/s
-    "disk" => 110000, ## iops
+    "disk" => 170000, ## iops
 );
 
 sub _sar_to_time {

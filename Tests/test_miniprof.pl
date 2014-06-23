@@ -24,5 +24,5 @@ my $file = miniprof_merge(\@ARGV, %opt);
 my $result = $file->miniprof_parse(%opt);
 
 $result->{raw} = undef;
-$result->{analysed} = undef;
+#$result->{analysed} = undef;
 print "Miniprof output:\n".Dumper($result);
