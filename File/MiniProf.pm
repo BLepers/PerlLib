@@ -227,6 +227,9 @@ sub _do_info {
       case '(sum_0+sum_1)/sum_2' {
          File::MiniProf::Results::Avg::sum_0_sum_1_div_sum_2_per_core($self, $info, \%parse_options, \%opt);
       }
+      case '(sum_0+sum_1)/sum_all' {
+         File::MiniProf::Results::Avg::sum_0_sum_1_div_sum_all_per_core($self, $info, \%parse_options, \%opt);
+      }
       case 'sum_1/sum_0-global' {
          File::MiniProf::Results::Avg::sum_1_div_sum_0_global($self, $info, \%parse_options, \%opt);
       }
@@ -242,6 +245,9 @@ sub _do_info {
       case 'per_core_sum' {
          File::MiniProf::Results::Core::per_core_sum($self, $info, \%parse_options, \%opt);
       }
+      case 'per_core_avg' {
+         File::MiniProf::Results::Core::per_core_avg($self, $info, \%parse_options, \%opt);
+      }
       case 'locality_per_node' {
          File::MiniProf::Results::DRAM::local_dram_usage($self, $info, \%parse_options, \%opt);
       }
@@ -256,6 +262,9 @@ sub _do_info {
       }
       case 'imbalance' {
          File::MiniProf::Results::Imbalance::imbalance($self, $info, \%parse_options, \%opt);
+      }
+      case 'uncore_dram' {
+         File::MiniProf::Results::DRAM::uncore_dram($self, $info, \%parse_options, \%opt);
       }
       else {
          die $parse_options{$info->{name}}->{value}." function not implemented yet!";
@@ -314,7 +323,7 @@ sub _miniprof_parse_text {
             $self->{miniprof}->{events_alias}->[$_event] = $_event;
          }
       }
-      elsif ($line =~ m/#Clock speed: (\d+)/) {
+      elsif ($line =~ m/#Clock speed:\s+(\d+)/) {
          $self->{miniprof}->{freq} = $1;
          $freq = $1;
       }
@@ -362,6 +371,11 @@ sub _miniprof_parse_text {
 
       $event = $events_alias[$event];
 
+      if(!defined $event) {
+         print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
+         next;
+      }
+
       my $logical_time;
       my $percentage_running;
 
@@ -377,7 +391,7 @@ sub _miniprof_parse_text {
       }
       else {
          print "[$self] Unknown/incomplete line (file: ".$self->{filename}.", line $line_no): $line\n";
-         next;
+         die;
       }
 
       if(defined $filtered{$logical_time}) {
@@ -449,6 +463,8 @@ sub _miniprof_parse_text {
    }
 
    $self->{miniprof}->{rdt_duration} = $last_time - $first_time if($last_time && $first_time);
+   $self->{miniprof}->{duration} = ($last_time - $first_time) / $freq if($last_time && $first_time);
+
    $self->{miniprof}->{_already_parsed} = 1;
 }
 
@@ -555,6 +571,7 @@ sub miniprof_merge {
    $file->{miniprof}->{_already_parsed} = 1;
    $file->{miniprof}->{freq} = $first_file->{miniprof}->{freq};
    $file->{miniprof}->{rdt_duration} = $first_file->{miniprof}->{rdt_duration};
+   $file->{miniprof}->{duration} = $first_file->{miniprof}->{duration};
    $file->{miniprof}->{memory_mapping} = $first_file->{miniprof}->{memory_mapping};
    $file->{miniprof}->{cores} = $first_file->{miniprof}->{cores};
 

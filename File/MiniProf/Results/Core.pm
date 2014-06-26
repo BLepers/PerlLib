@@ -41,13 +41,13 @@ sub per_core_sum {
             $plot =  File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name}.' on core '.$core);
 
             my @plota;
-            for my $link (0..$tsize) {
+            for my $event_no (0..$tsize) {
                my @vals = ();
-               for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[$link]}->{val}}); $i++) {
-                  my $val = $self->{miniprof}->{raw}->{$core}->{$events[$link]}->{val}->[$i];
+               for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{val}}); $i++) {
+                  my $val = $self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{val}->[$i];
                   push(@vals, $val);
                }
-               push(@plota, $self->{miniprof}->{raw}->{$core}->{$events[$link]}->{time});
+               push(@plota, $self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{time});
                push(@plota, \@vals);
             }
 
@@ -60,6 +60,5 @@ sub per_core_sum {
       }
    }
 }
-
 
 1;

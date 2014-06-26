@@ -189,6 +189,65 @@ sub sum_0_sum_1_div_sum_2_per_core {
    }
 }
 
+sub sum_0_sum_1_div_sum_all_per_core {
+   my ($self, $info, $parse_options, $opt) = @_;
+   my  $plot;
+   my @gnuplot_xy;
+   if($opt->{gnuplot}) {
+      $plot = File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name});
+   }
+
+   my $nb_events = $self->_nb_events($info) - 1;
+   my @events;
+   my @global_sum;
+   for my $i (0..$nb_events) {
+      $events[$i] = $self->_scripted_value_to_event($i, $info);
+   }
+
+
+   for my $core (sort {$a <=> $b} keys %{$self->{miniprof}->{raw}}) {
+      my @current_glob_sum;
+      for my $i (0..$nb_events) {
+         my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
+         $global_sum[$i] += $sum;
+         $current_glob_sum[$i] = $sum;
+      }
+
+      if(sum(@current_glob_sum) != 0) {
+         $info->{results}->{$core} = ($current_glob_sum[0] + $current_glob_sum[1]) / (sum(@current_glob_sum));
+      }
+
+      if($opt->{gnuplot}) {
+         if(!defined($opt->{gnuplot_max_cpu}) || $core < $opt->{gnuplot_max_cpu}) {
+            my @vals = ();
+            for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[0]}->{val}}); $i++) {
+               my @vals;
+               for my $j (0..$nb_events) {
+                  $vals[$j] = $self->{miniprof}->{raw}->{$core}->{$events[$j]}->{val}->[$i];
+               }
+               my $avg = (sum(@vals))?($vals[0]/(sum(@vals))):0;
+               push(@vals, $avg);
+            }
+            push(@gnuplot_xy, $self->{miniprof}->{raw}->{$core}->{$events[0]}->{time}); #x
+            push(@gnuplot_xy, \@vals); #y
+         }
+      }
+   }
+
+   if(sum(@global_sum)){
+      $info->{results}->{ALL} = ($global_sum[0] + $global_sum[1]) / (sum(@global_sum));
+   }
+   else {
+      $info->{results}->{ALL} = "No samples";
+   }
+
+   if($opt->{gnuplot}) {
+      $plot->gnuplot_set_plot_titles(map("Core $_", sort {$a <=> $b} keys(%{$self->{miniprof}->{raw}})));
+      $plot->gnuplot_plot_many( @gnuplot_xy );
+   }
+}
+
+
 
 sub sum_0_div_sum_all_per_core {
    my ($self, $info, $parse_options, $opt) = @_;
