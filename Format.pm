@@ -479,6 +479,23 @@ sub print {
    }
 }
 
+sub latex_print {
+   my ($self) = @_;
+   $self->{term_output} = 0;
+   $self->{latex} = 1;
+   $self->set_separation_char(undef);
+   my $total_len = $self->total_len;
+   my $total_height = $self->total_height;
+   my $i = 0;
+   print "\\hline\n";
+   for(;;) {
+     my $line = $self->print_line($i++);
+     last if $line eq "";
+     $line =~ s/&\s*$/\\\\/;
+     print $line;
+     print "\n\\hline\n";
+   }
+}
 
 #Total width and total height. Used for recursive printing to know the size of a format and by a format to
 #know the max width of its content.
@@ -538,6 +555,7 @@ sub print_line {
          my $class = $self->{cols}->{$col}->{class};
          $class = $self->{center_align_class} if(!defined($class) || ($class ne $self->{left_align_class} && $class ne $self->{right_align_class}));
          $str.= $self->print_var($col, $class, $self->{cols}->{$col}->{max_length}, $line, $self->{cols}->{$col}->{title_validator});
+         $str.= '&' if($self->{latex});
       }
    } elsif($line == $self->{title_height} && defined($self->{separation_char})) {
       for my $col (keys %{$self->{cols}}) {
@@ -568,7 +586,7 @@ sub print_line {
          $i++;
          return "" if($i >= $self->{nb_lines});
       }
-      
+
       if($print_separator) {
          my $sep = $self->{special_vals}->[$i]->[$seen_separators];
          if(ref($sep) eq "subtitle") {
@@ -610,10 +628,11 @@ sub print_line {
       } else {
          for my $col (keys %{$self->{cols}}) {
             $str.= $self->print_var($self->{cols}->{$col}->{vals}->[$i], $self->{cols}->{$col}->{class},  $self->{cols}->{$col}->{max_length}, $line, $self->{cols}->{$col}->{validator});
+            $str.= '&' if($self->{latex});
          }
       }
    }
-   
+
    if(defined $self->{debug}) {
       print "($str)\n";
    }
