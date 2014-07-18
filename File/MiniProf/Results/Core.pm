@@ -24,9 +24,9 @@ sub per_core_sum {
       my $to_plot = 0;
       for my $i (0..$tsize) {
          my ($avg, $sum, $count) = File::MiniProf::_miniprof_get_average_and_sum($self->{miniprof}->{raw}->{$core}, $events[$i] );
-         
+
          my $local_dram = File::MiniProf::_local_dram_fun($self, $core, $opt->{local_dram_fun});
-         
+
          $info->{results}->{$core}->[$i] = $sum;
          $info->{results}->{GLOBAL}->[$i] += $sum;
          $info->{results}->{"NODE$local_dram"}->[$i] += $sum;
@@ -41,26 +41,24 @@ sub per_core_sum {
             $plot =  File::MiniProf::Results::Plot::get_plot($info, $parse_options, $opt, $parse_options->{$info->{name}}->{name}.' on core '.$core);
 
             my @plota;
-            for my $link (0..$tsize) {
+            for my $event_no (0..$tsize) {
                my @vals = ();
-               for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[$link]}->{val}}); $i++) {
-                  my $val = $self->{miniprof}->{raw}->{$core}->{$events[$link]}->{val}->[$i];
+               for (my $i = 0; $i < scalar (@{$self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{val}}); $i++) {
+                  my $val = $self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{val}->[$i];
                   push(@vals, $val);
                }
-               push(@plota, $self->{miniprof}->{raw}->{$core}->{$events[$link]}->{time});
+               push(@plota, $self->{miniprof}->{raw}->{$core}->{$events[$event_no]}->{time});
                push(@plota, \@vals);
             }
-      
+
             $plot->gnuplot_set_plot_titles(map(($parse_options->{$info->{name}}->{legend}//'')." $_", (0..$tsize)));
-            
-            $plot->gnuplot_plot_many( 
+
+            $plot->gnuplot_plot_many(
                @plota
             );
          }
       }
-
    }
 }
-
 
 1;

@@ -17,15 +17,22 @@ Returns:
    {
       average   => average of the _values_ found in the file (e.g. MB/s for dev, idleness for CPU).
       usage     => %of utilization of the ressource (e.g. 100 = NIC is overloaded, CPU is fully LOADED, ...).
-      min     
+      min
       max       => Same metric as average but min and max values.
-      min_usage 
+      min_usage
       max_usage => Same metric as usage but min and max.
    }
 
    More data is available in ->{dev} or ->{cpu} or ... depending on the analysed file.
    Pre-parsed values are available in ->{raw}.
 =cut
+
+my %device_capabilites = (
+    #"net" => 940, ## 1Gb/s
+    "net" => 9900, ## 10Gb/s
+    "disk" => 170000, ## iops
+);
+
 sub _sar_to_time {
    my ($line, $first_time, $last_time) = @_;
    (my $hour, my $min, my $sec, my $am) = ($line =~ m/^(\d+):(\d+):(\d+) (AM|PM)/);
@@ -39,7 +46,7 @@ sub _sar_to_time {
 
    $first_time = $time if($first_time == 0);
    $last_time = $time - $first_time;
-   if($last_time < 0) { 
+   if($last_time < 0) {
       #For some reason the date is sometimes displayed with an "AM" instead of a PM. (ie 12:00AM ... 01:00AM). We correct that.
       $first_time -= 12*60*60;
       $last_time = $time - $first_time;
@@ -60,8 +67,10 @@ sub _sar_get_average_from_relevant_data {
    my $count = 0;
    my $max = 0;
    my $min = -1;
+
    for my $key (keys %$hash_ref) {
       next if($key > $max_time_to_consider || $key < $min_time_to_consider);
+
       $sum += $hash_ref->{$key};
       $count++;
       $max = $hash_ref->{$key} if($hash_ref->{$key} > $max);
@@ -105,10 +114,22 @@ sub _sar_sanity_check {
    }
 }
 
+sub plot_to_file{
+    my ($opt, $plot, $fn) = @_;
+    return if (!defined $opt->{gnuplot_file});
+
+    if($opt->{gnuplot_file} eq "png"){
+        $plot->gnuplot_hardcopy( $fn.".png", 'png', 'size 1280,960' );
+    }
+    else {
+        $plot->gnuplot_hardcopy( $fn.".".$opt->{gnuplot_file}, $opt->{gnuplot_file} );
+    }
+}
+
 sub sar_parse_dev {
    my ($self, $opt) = @_;
    $self->_sar_sanity_check;
-   my $max_per_nics = eval { $opt->{max_per_nics} } // 940;
+   my $max_per_nics = eval { $opt->{max_per_nics} } // $device_capabilites{net};
 
    my $first_time = 0;
    my $last_time = 0;
@@ -123,7 +144,7 @@ sub sar_parse_dev {
          ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
       } elsif($line =~ m/(eth|em)\d+/) {
          next if $line =~ m/rename/;
-         (my $eth, my $rxB, my $txB) = ($line =~ m/[eth|em](\d+)\s+\d+\.\d+\s+\d+\.\d+\s+(\d+\.\d+)\s+(\d+\.\d+)/);
+         (my $eth, my $rxB, my $txB) = ($line =~ m/([eth|em].*?)\s+\d+\.\d+\s+\d+\.\d+\s+(\d+\.\d+)\s+(\d+\.\d+)/);
 
          $times{$last_time}->{$eth}->{tx} = $txB;
          $times{$last_time}->{$eth}->{rx} = $rxB;
@@ -136,7 +157,7 @@ sub sar_parse_dev {
          $global{rx}->{$last_time} += $rxB;
       }
    }
-   
+
    $self->{sar_dev}->{length} = $last_time;
    $self->{sar_dev}->{nb_eths} = scalar keys %eths;
    $self->{sar_dev}->{raw}->{times} = \%times;
@@ -161,13 +182,13 @@ sub sar_parse_dev {
             push(@gnuplot_xy, \@_values); #y
 
             my $plot = Graphics::GnuplotIF->new(persist=>1);
-            $plot->gnuplot_set_title( "Eth$eth -- $x" );
+            $plot->gnuplot_set_title( "$eth -- $x" );
 
             if($opt->{gnuplot_file}){
-               $plot->gnuplot_hardcopy( $self->{filename}.".ETH$eth.$x.png", 'png' );   
+                plot_to_file($opt, $plot, $self->{filename}.".$eth.$x");
             }
 
-            $plot->gnuplot_set_style( "points" );      
+            $plot->gnuplot_set_style( "points" );
             $plot->gnuplot_plot_many( @gnuplot_xy );
          }
       }
@@ -189,17 +210,17 @@ sub sar_parse_dev {
 
          my $plot = Graphics::GnuplotIF->new(persist=>1);
          $plot->gnuplot_set_title( "GLOBAL -- $x" );
-         
+
          if($opt->{gnuplot_file}){
-            $plot->gnuplot_hardcopy( $self->{filename}.".ETHGLOBAL.$x.png", 'png' );   
+            plot_to_file($opt, $plot, $self->{filename}.".global.$x");
          }
-         
-         $plot->gnuplot_set_style( "points" );      
+
+         $plot->gnuplot_set_style( "points" );
          $plot->gnuplot_plot_many( @gnuplot_xy );
       }
    }
-  
-   ## TODO- Not compatible with the new layout 
+
+   ## TODO- Not compatible with the new layout
    #my ($average, $min, $max) = _sar_get_global_average($self->{sar_dev}->{eth});
    #$self->{sar_dev}->{average} = int($average);
    #$self->{sar_dev}->{usage} = int(100*$average/$max_per_nics*100)/100;
@@ -213,62 +234,7 @@ sub sar_parse_dev {
 
 sub sar_parse_disk {
    my ($self, $opt) = @_;
-   $self->_sar_sanity_check;
-
-   my $first_time = 0;
-   my $last_time = 0;
-   my %times = ();
-   my %diskusage = ();
-   while (my $line = <$self>) {
-      next if ($line =~ /Linux/);
-      #09:11:11          tps      rtps      wtps   bread/s   bwrtn/s
-      #09:11:12         6.00      0.00      6.00      0.00     48.00
-      if($line =~ m/tps/) {
-         ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
-      } elsif($line =~ m/\d\d:\d\d:\d\d/ && $line !~ m/tps/) {
-         (my $tps, my $rtps, my $wtps, my $bread, my $bwritten) = ($line =~ m/^\d+:\d+:\d+\s+(?:[AP]M\s+)?(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*/);
-
-         if (!defined($bread)) {
-            $line =~ s/\n$//;
-            print "[$self] Undefined line : ".$line."\n";
-            next;
-         }
-
-         ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
-
-         $times{$last_time}->{breadps} = $bread;
-         $times{$last_time}->{bwrittenps} = $bwritten;
-
-         $diskusage{read}->{$last_time} = $bread;
-         $diskusage{write}->{$last_time} = $bwritten;
-      }
-   }
-   
-   $self->{sar_disk}->{length} = $last_time;
-   $self->{sar_disk}->{raw}->{times} = \%times;
-   $self->{sar_disk}->{raw}->{usage} = \%diskusage;
-   $self->{sar_max_time_to_consider} = $last_time + $self->{sar_max_time_to_consider} if($self->{sar_max_time_to_consider} < 0);
-
-   my ($read_average, $read_sum, $read_count, $read_min, $read_max) = _sar_get_average_from_relevant_data($diskusage{read}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-   $self->{sar_disk}->{read}->{average} = int($read_average);
-   $self->{sar_disk}->{read}->{min_usage} = int($read_min);
-   $self->{sar_disk}->{read}->{max_usage} = int($read_max);
-   my ($written_average, $written_sum, $written_count, $written_min, $written_max) = _sar_get_average_from_relevant_data($diskusage{write}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-   $self->{sar_disk}->{write}->{average} = int($written_average);
-   $self->{sar_disk}->{write}->{min_usage} = int($written_min);
-   $self->{sar_disk}->{write}->{max_usage} = int($written_max);
-
-   $self->{sar_disk}->{average} = int($read_average) + int($written_average);
-   $self->{sar_disk}->{usage} = int($read_average) + int($written_average);
-   $self->{sar_disk}->{min_usage} = int($read_min) if ($read_min < $written_min);
-   $self->{sar_disk}->{min_usage} = int($written_min) if ($read_min >= $written_min);
-   $self->{sar_disk}->{max_usage} = int($read_max) if ($read_max < $written_max);
-   $self->{sar_disk}->{max_usage} = int($written_max) if ($read_max >= $written_max);
-   return $self->{sar_disk};
-}
-
-sub sar_parse_disk2 {
-   my ($self, $opt) = @_;
+   my $max_iops_per_disk = eval { $opt->{max_iops_per_disk} } // $device_capabilites{disk};
    $self->_sar_sanity_check;
 
    my $first_time = 0;
@@ -280,11 +246,14 @@ sub sar_parse_disk2 {
       #02:02:29          DEV       tps  rd_sec/s  wr_sec/s  avgrq-sz  avgqu-sz     await     svctm     %util
       #02:02:30       dev8-0     27.00   1792.00      0.00     66.37      0.10      4.44      2.96      8.00
       #02:02:30      dev8-16    221.00  28696.00      0.00    129.85      0.59      2.67      2.04     45.00
-      
+
       if($line =~ m/tps/) {
          ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
       } elsif($line =~ m/\d\d:\d\d:\d\d/ && $line !~ m/tps/) {
-         (my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.|scd.)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
+         #(my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.|scd.|md.)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
+         (my $dev, my $tps, my $rd_sec, my $wr_sec) = ($line =~ m/(dev\d+-\d+|sd.|scd.|md\d+)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)/);
+
+        next if !($dev =~ m/md\d+/);
 
          if (!defined($wr_sec)) {
             $line =~ s/\n$//;
@@ -294,51 +263,73 @@ sub sar_parse_disk2 {
 
          ($first_time, $last_time) = _sar_to_time($line, $first_time, $last_time);
 
-         
+
          $times{$last_time}->{$dev}->{rd_sec} = $rd_sec;
          $times{$last_time}->{$dev}->{wr_sec} = $wr_sec;
-         
+         $times{$last_time}->{$dev}->{tps} = $tps;
+
          $disk{$dev}->{rd_sec}->{$last_time} = $rd_sec;
          $disk{$dev}->{wr_sec}->{$last_time} = $wr_sec;
+         $disk{$dev}->{tps}->{$last_time} = $tps;
       }
    }
-   
+
    $self->{sar_disk}->{length} = $last_time;
    $self->{sar_disk}->{raw}->{times} = \%times;
    $self->{sar_disk}->{raw}->{disk} = \%disk;
    $self->{sar_max_time_to_consider} = $last_time + $self->{sar_max_time_to_consider} if($self->{sar_max_time_to_consider} < 0);
 
    for my $d (keys %{$self->{sar_disk}->{raw}->{disk}}) {
-      my ($rd_sec_average, $rd_sec_sum, $rd_sec_count, $rd_sec_min, $rd_sec_max) = _sar_get_average_from_relevant_data($disk{$d}->{rd_sec}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-      my ($wr_sec_average, $wr_sec_sum, $wr_sec_count, $wr_sec_min, $wr_sec_max) = _sar_get_average_from_relevant_data($disk{$d}->{wr_sec}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-      
+      my ($rd_sec_average, $rd_sec_sum, $rd_sec_count, $rd_sec_min, $rd_sec_max) =
+        _sar_get_average_from_relevant_data($disk{$d}->{rd_sec}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
+      my ($wr_sec_average, $wr_sec_sum, $wr_sec_count, $wr_sec_min, $wr_sec_max) =
+        _sar_get_average_from_relevant_data($disk{$d}->{wr_sec}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
+
+      my ($tps_average, $tps_sum, $tps_count, $tps_min, $tps_max) = _sar_get_average_from_relevant_data($disk{$d}->{tps}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
+
       $self->{sar_disk}->{$d}->{rd_sec_average} = $rd_sec_average;
-      $self->{sar_disk}->{$d}->{wr_sec_average} = $wr_sec_average;
       $self->{sar_disk}->{$d}->{rd_sec_min} = $rd_sec_min;
-      $self->{sar_disk}->{$d}->{wr_sec_min} = $wr_sec_min;
       $self->{sar_disk}->{$d}->{rd_sec_max} = $rd_sec_max;
+      $self->{sar_disk}->{$d}->{wr_sec_average} = $wr_sec_average;
+      $self->{sar_disk}->{$d}->{wr_sec_min} = $wr_sec_min;
       $self->{sar_disk}->{$d}->{wr_sec_max} = $wr_sec_max;
-      
-      
+
+      $self->{sar_disk}->{$d}->{tps_average} = $tps_average;
+      $self->{sar_disk}->{$d}->{tps_min} = $tps_min;
+      $self->{sar_disk}->{$d}->{tps_max} = $tps_max;
+      $self->{sar_disk}->{$d}->{usage} = $tps_average * 100. / $max_iops_per_disk;
+
       if((defined $opt) && $opt->{gnuplot}) {
          for my $op (keys %{$self->{sar_disk}->{raw}->{disk}->{$d}}){
             my @_times = sort keys %{$self->{sar_disk}->{raw}->{disk}->{$d}->{$op}};
-            my @_values = map { $self->{sar_disk}->{raw}->{disk}->{$d}->{$op}->{$_} * 512 / (1024*1024) } @_times;
-   
+            my @_values;
+            if($op eq "tps") {
+                @_values = map { $self->{sar_disk}->{raw}->{disk}->{$d}->{$op}->{$_} } @_times;
+            }
+            else {
+                @_values = map { $self->{sar_disk}->{raw}->{disk}->{$d}->{$op}->{$_} * 512 / (1024*1024) } @_times;
+            }
+
             my @gnuplot_xy;
             push(@gnuplot_xy, \@_times); #x
             push(@gnuplot_xy, \@_values); #y
-         
+
             my $plot = Graphics::GnuplotIF->new(persist=>1);
             $plot->gnuplot_set_title( "Disk $d" );
             $plot->gnuplot_set_xlabel("Time (s)");
-            $plot->gnuplot_set_ylabel("$op (MB/s)");
-            
-            if($opt->{gnuplot_file}){
-               $plot->gnuplot_hardcopy( $self->{filename}.".$d.$op.png", 'png' );   
+
+            if($op eq "tps") {
+                $plot->gnuplot_set_ylabel("$op");
             }
-            
-            $plot->gnuplot_set_style( "points" );      
+            else {
+                $plot->gnuplot_set_ylabel("$op (MB/s)");
+            }
+
+            if($opt->{gnuplot_file}){
+                plot_to_file($opt, $plot, $self->{filename}.".$d.$op");
+            }
+
+            $plot->gnuplot_set_style( "points" );
             $plot->gnuplot_plot_many( @gnuplot_xy );
          }
       }
@@ -351,17 +342,17 @@ sub _gnuplot_mem {
    my $opt = $_[1];
    my @gnuplot_xy = @{$_[2]};
    my $ext = $_[3];
-   
+
    my $plot = Graphics::GnuplotIF->new(persist=>1);
    $plot->gnuplot_set_xlabel("Time (s)");
    $plot->gnuplot_set_ylabel( "Memory used (MB)" );
-      
-   $plot->gnuplot_set_style( "points" );   
-      
+
+   $plot->gnuplot_set_style( "points" );
+
    if($opt->{gnuplot_file}){
-      $plot->gnuplot_hardcopy( $self->{filename}.".$ext.png", 'png' );   
+        plot_to_file($opt, $plot, $self->{filename}.".$ext");
    }
-      
+
    $plot->gnuplot_set_plot_titles($ext);
    $plot->gnuplot_plot_many( @gnuplot_xy );
 }
@@ -396,7 +387,7 @@ sub sar_parse_mem {
          $memusage{mem}->{MBcached}->{$last_time} = $cached / (1024);
       }
    }
-   
+
    $self->{sar_mem}->{length} = $last_time;
    $self->{sar_mem}->{raw} = \%memusage;
    $self->{sar_max_time_to_consider} = $last_time + $self->{sar_max_time_to_consider} if($self->{sar_max_time_to_consider} < 0);
@@ -406,66 +397,66 @@ sub sar_parse_mem {
    $self->{sar_mem}->{usage} = int($average);
    $self->{sar_mem}->{min_usage} = int($min);
    $self->{sar_mem}->{max_usage} = int($max);
-   
+
    ($average, $sum, $count, $min, $max) = _sar_get_average_from_relevant_data($memusage{mem}->{MBused}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-   
+
    $self->{sar_mem}->{min_MBused} = int($min);
    $self->{sar_mem}->{max_MBused} = int($max);
    $self->{sar_mem}->{avg_MBused} = int($average);
-   
+
    ($average, $sum, $count, $min, $max) = _sar_get_average_from_relevant_data($memusage{mem}->{MBcached}, $self->{sar_max_time_to_consider}, $self->{sar_min_time_to_consider});
-   
+
    $self->{sar_mem}->{min_MBcached} = int($min);
    $self->{sar_mem}->{max_MBcached} = int($max);
    $self->{sar_mem}->{avg_MBcached} = int($average);
-   
+
 
    if((defined $opt) && $opt->{gnuplot}) {
       my @_times = sort keys %{$self->{sar_mem}->{raw}->{mem}->{MBused}};
       my @_values = map { $self->{sar_mem}->{raw}->{mem}->{MBused}->{$_} } @_times;
       my @_values2 = map { $self->{sar_mem}->{raw}->{mem}->{MBcached}->{$_} } @_times;
       my @_values3 = map { $self->{sar_mem}->{raw}->{mem}->{MBused}->{$_} - $self->{sar_mem}->{raw}->{mem}->{MBcached}->{$_} } @_times;
-           
+
       ## Total, cached and not cached
-      
+
       my @gnuplot_xy;
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values); #y
-      
+
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values2); #y
-      
+
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values3); #y
-      
+
       my $plot = Graphics::GnuplotIF->new(persist=>1);
       $plot->gnuplot_set_xlabel("Time (s)");
       $plot->gnuplot_set_ylabel( "Memory used (MB)" );
-      
-      $plot->gnuplot_set_style( "points" );   
-      
+
+      $plot->gnuplot_set_style( "points" );
+
       if($opt->{gnuplot_file}){
-         $plot->gnuplot_hardcopy( $self->{filename}.".png", 'png' );   
+          plot_to_file($opt, $plot, $self->{filename});
       }
-      
+
       $plot->gnuplot_set_plot_titles(("Total", "Cached", "not cached"));
       $plot->gnuplot_plot_many( @gnuplot_xy );
-      
+
       @gnuplot_xy = ();
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values); #y
       _gnuplot_mem($self, $opt, \@gnuplot_xy, "Total");
-      
+
       @gnuplot_xy = ();
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values2); #y
       _gnuplot_mem($self, $opt, \@gnuplot_xy, "Cached");
-      
+
       @gnuplot_xy = ();
       push(@gnuplot_xy, \@_times); #x
       push(@gnuplot_xy, \@_values3); #y
       _gnuplot_mem($self, $opt, \@gnuplot_xy, "NotCached");
-      
+
    }
 
    return $self->{sar_mem};
@@ -504,7 +495,7 @@ sub sar_parse_cpu {
    for my $cpu (keys %cpus) {
       $cpus{$cpu}->{always_dead} //= 1;
    }
-   
+
    $self->{sar_cpu}->{length} = $last_time;
    $self->{sar_cpu}->{nb_cpus} = scalar keys %cpus;
    $self->{sar_cpu}->{raw}->{cpu} = \%cpus;
@@ -539,19 +530,18 @@ sub sar_parse_cpu {
          $plot->gnuplot_set_ylabel("Idleness (%)");
          $plot->gnuplot_set_xlabel("Time (s)");
          $plot->gnuplot_set_style( "points" );
-         
-         $plot->gnuplot_set_yrange(0, 100);
-         
-         #if($opt->{gnuplot_file}){
-         #$plot->gnuplot_hardcopy( $self->{filename}.".core$cpu.png", 'png' );   
-         #}
 
-         $plot->gnuplot_plot_many( @gnuplot_xy );          
+         $plot->gnuplot_set_yrange(0, 100);
+
+         if($opt->{gnuplot_file}){
+             plot_to_file($opt, $plot, $self->{filename}.".all");
+         }
+
+         $plot->gnuplot_plot_many( @gnuplot_xy );
    }
 
    my ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'idleness');
    $self->{sar_cpu}->{average_idleness} = int($average);
-   $self->{sar_cpu}->{average} = int($average);
    $self->{sar_cpu}->{min_idleness} = int($min);
    $self->{sar_cpu}->{max_idleness} = int($max);
    $self->{sar_cpu}->{usage} = int(100-$average);
@@ -561,12 +551,12 @@ sub sar_parse_cpu {
    ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'sys');
    $self->{sar_cpu}->{average_sys} = int($average);
    $self->{sar_cpu}->{min_sys} = int($min);
-   $self->{sar_cpu}->{max_sys} = int($min);
+   $self->{sar_cpu}->{max_sys} = int($max);
 
    ($average, $min, $max) = _sar_get_global_average($self->{sar_cpu}->{cpu}, 'user');
    $self->{sar_cpu}->{average_user} = int($average);
    $self->{sar_cpu}->{min_user} = int($min);
-   $self->{sar_cpu}->{max_user} = int($min);
+   $self->{sar_cpu}->{max_user} = int($max);
 
    return $self->{sar_cpu};
 }
@@ -585,8 +575,6 @@ sub sar_parse {
          } elsif($line =~ m/kbmemfree/) {
             return $self->sar_parse_mem($opt);
          } elsif($line =~ m/rd_sec\/s/) {
-            return $self->sar_parse_disk2($opt);
-         } elsif($line =~ m/bread\/s/) {
             return $self->sar_parse_disk($opt);
          }  else {
             print "[$self] Found no suitable way to interpret file\n";
